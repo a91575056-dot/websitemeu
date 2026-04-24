@@ -51,9 +51,9 @@ export const siteConfig = {
   whatsappDirectLink: "https://wa.me/message/SG2JWLAO726VK1",
   whatsappDefaultMessage:
     "Hi Dionis, I would like a website or landing page quote.",
-  title: "Dionis Web | Dionis Grecu, Freelance Web Developer",
+  title: "Landing Page & Business Website Design | Dionis Web",
   description:
-    "Premium, mobile-first websites and landing pages for small businesses, creators, and local brands. Clean design, fast delivery, WhatsApp-ready launches, and packages starting from $40.",
+    "Freelance web designer creating fast, mobile-first landing pages and business websites for small brands, creators, and local companies. Packages start from $40.",
   shortDescription:
     "Modern websites and landing pages for small businesses, creators, and personal brands.",
   heroHeadline: "Premium websites that look established from day one.",

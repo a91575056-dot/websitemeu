@@ -10,12 +10,40 @@ import { SiteHeader } from "@/components/site-header";
 import { StickyWhatsApp } from "@/components/sticky-whatsapp";
 import { getWhatsAppLink, portfolioProjects, siteConfig } from "@/data/site";
 
+const portfolioDescription =
+  "Explore landing page and business website concepts for creators, local businesses, restaurants, service brands, and personal portfolios.";
+const portfolioSocialTitle = `Portfolio | ${siteConfig.name}`;
+const portfolioSocialImage = {
+  url: "/opengraph-image",
+  width: 1200,
+  height: 630,
+  alt: `${siteConfig.name} portfolio preview`,
+};
+
 export const metadata: Metadata = {
   title: "Portfolio",
-  description:
-    "Explore premium landing page and business website concepts for creators, local businesses, restaurants, and personal brands.",
+  description: portfolioDescription,
   alternates: {
     canonical: "/portfolio",
+  },
+  openGraph: {
+    title: portfolioSocialTitle,
+    description: portfolioDescription,
+    url: "/portfolio",
+    siteName: siteConfig.name,
+    type: "website",
+    images: [portfolioSocialImage],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: portfolioSocialTitle,
+    description: portfolioDescription,
+    images: [
+      {
+        url: "/opengraph-image",
+        alt: portfolioSocialImage.alt,
+      },
+    ],
   },
 };
 

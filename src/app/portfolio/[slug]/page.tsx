@@ -36,14 +36,48 @@ export async function generateMetadata({
   if (!project) {
     return {
       title: "Project not found",
+      robots: {
+        index: false,
+        follow: false,
+      },
     };
   }
+
+  const canonicalPath = `/portfolio/${project.slug}`;
+  const socialTitle = `${project.seoTitle} | ${siteConfig.name}`;
+  const socialImageAlt = `${project.title} project by ${siteConfig.name}`;
 
   return {
     title: project.seoTitle,
     description: project.seoDescription,
     alternates: {
-      canonical: `/portfolio/${project.slug}`,
+      canonical: canonicalPath,
+    },
+    openGraph: {
+      title: socialTitle,
+      description: project.seoDescription,
+      url: canonicalPath,
+      siteName: siteConfig.name,
+      type: "website",
+      images: [
+        {
+          url: "/opengraph-image",
+          width: 1200,
+          height: 630,
+          alt: socialImageAlt,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: socialTitle,
+      description: project.seoDescription,
+      images: [
+        {
+          url: "/opengraph-image",
+          alt: socialImageAlt,
+        },
+      ],
     },
   };
 }

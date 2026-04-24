@@ -4,6 +4,8 @@ import { siteConfig } from "@/data/site";
 
 export const dynamic = "force-static";
 
+export const alt = `${siteConfig.name} website preview`;
+
 export const size = {
   width: 1200,
   height: 630,

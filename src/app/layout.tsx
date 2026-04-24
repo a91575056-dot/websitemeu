@@ -7,6 +7,12 @@ import "./globals.css";
 
 const manrope = { variable: "--font-manrope" };
 const spaceGrotesk = { variable: "--font-space-grotesk" };
+const sharedSocialImage = {
+  url: "/opengraph-image",
+  width: 1200,
+  height: 630,
+  alt: `${siteConfig.name} website preview`,
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.siteUrl),
@@ -16,6 +22,9 @@ export const metadata: Metadata = {
   },
   description: siteConfig.description,
   applicationName: siteConfig.name,
+  authors: [{ name: siteConfig.personName, url: siteConfig.siteUrl }],
+  creator: siteConfig.personName,
+  publisher: siteConfig.name,
   keywords: siteConfig.keywords,
   alternates: {
     canonical: "/",
@@ -27,20 +36,19 @@ export const metadata: Metadata = {
     url: siteConfig.siteUrl,
     siteName: siteConfig.name,
     type: "website",
-    images: [
-      {
-        url: "/opengraph-image",
-        width: 1200,
-        height: 630,
-        alt: `${siteConfig.name} portfolio preview`,
-      },
-    ],
+    locale: "en_US",
+    images: [sharedSocialImage],
   },
   twitter: {
     card: "summary_large_image",
     title: siteConfig.title,
     description: siteConfig.description,
-    images: ["/opengraph-image"],
+    images: [
+      {
+        url: "/opengraph-image",
+        alt: sharedSocialImage.alt,
+      },
+    ],
   },
   icons: {
     icon: [{ url: "/icon.png?v=4", type: "image/png" }],
