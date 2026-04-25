@@ -263,7 +263,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                     Start on WhatsApp
                     <ArrowRight className="size-4" />
                   </a>
-                  <Link href="/#pricing" className="button-secondary border-white/20 bg-white/10 text-white">
+                  <Link href="/pricing" className="button-secondary border-white/20 bg-white/10 text-white">
                     View pricing
                     <ArrowRight className="size-4" />
                   </Link>

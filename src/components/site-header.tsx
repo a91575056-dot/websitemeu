@@ -130,16 +130,25 @@ export function SiteHeader({
         </Link>
 
         <nav className="hidden items-center gap-7 lg:flex">
-          {navItems.map((item) => (
-            <Link
-              key={`${item.label}-${item.href}`}
-              href={item.href}
-              onClick={(event) => handleSectionNavClick(event, item.href)}
-              className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-950"
-            >
-              {item.label}
-            </Link>
-          ))}
+          {navItems.map((item) => {
+            const isActive =
+              item.href === pathname ||
+              (item.href !== "/" && pathname.startsWith(`${item.href}/`));
+
+            return (
+              <Link
+                key={`${item.label}-${item.href}`}
+                href={item.href}
+                onClick={(event) => handleSectionNavClick(event, item.href)}
+                className={`text-sm font-medium transition-colors hover:text-slate-950 ${
+                  isActive ? "text-slate-950" : "text-slate-600"
+                }`}
+                aria-current={isActive ? "page" : undefined}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="hidden items-center gap-3 lg:flex">
@@ -170,17 +179,28 @@ export function SiteHeader({
             className="border-t border-white/70 bg-[rgba(248,244,237,0.96)] px-4 py-5 shadow-[0_18px_60px_-35px_rgba(15,23,42,0.55)] lg:hidden"
           >
             <nav className="mx-auto flex w-full max-w-[104rem] flex-col gap-3">
-              {navItems.map((item) => (
-                <Link
-                  key={`${item.label}-${item.href}-mobile`}
-                  href={item.href}
-                  onClick={(event) => handleSectionNavClick(event, item.href)}
-                  className="flex items-center justify-between rounded-2xl border border-white/80 bg-white/80 px-4 py-4 text-sm font-semibold text-slate-900"
-                >
-                  {item.label}
-                  <ArrowRight className="size-4" />
-                </Link>
-              ))}
+              {navItems.map((item) => {
+                const isActive =
+                  item.href === pathname ||
+                  (item.href !== "/" && pathname.startsWith(`${item.href}/`));
+
+                return (
+                  <Link
+                    key={`${item.label}-${item.href}-mobile`}
+                    href={item.href}
+                    onClick={(event) => handleSectionNavClick(event, item.href)}
+                    className={`flex items-center justify-between rounded-2xl border px-4 py-4 text-sm font-semibold ${
+                      isActive
+                        ? "border-slate-950 bg-slate-950 text-white"
+                        : "border-white/80 bg-white/80 text-slate-900"
+                    }`}
+                    aria-current={isActive ? "page" : undefined}
+                  >
+                    {item.label}
+                    <ArrowRight className="size-4" />
+                  </Link>
+                );
+              })}
               <a
                 href={whatsappHref}
                 target="_blank"

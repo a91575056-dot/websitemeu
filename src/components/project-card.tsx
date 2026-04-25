@@ -59,7 +59,7 @@ export function ProjectCard({ project, priority = false }: ProjectCardProps) {
             View Project
             <ArrowRight className="size-4" />
           </Link>
-          <Link href="/#contact" className="button-secondary">
+          <Link href="/contact" className="button-secondary">
             Book Something Similar
           </Link>
         </div>

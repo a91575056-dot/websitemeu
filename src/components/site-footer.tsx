@@ -40,10 +40,12 @@ export function SiteFooter() {
             Quick Links
           </p>
           <div className="flex flex-col gap-3 text-sm text-slate-600">
-            <Link href="/#services">Services</Link>
-            {siteConfig.showPortfolio ? <Link href="/#portfolio">Projects</Link> : null}
-            <Link href="/#about">About</Link>
-            <Link href="/#pricing">Pricing</Link>
+            <Link href="/services">Services</Link>
+            <Link href="/about">About</Link>
+            <Link href="/pricing">Pricing</Link>
+            <Link href="/faq">FAQ</Link>
+            <Link href="/contact">Contact</Link>
+            <Link href="/feedbacks">Feedback</Link>
             {siteConfig.showPortfolio ? <Link href="/portfolio">Portfolio</Link> : null}
           </div>
         </div>
