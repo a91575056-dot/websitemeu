@@ -4,10 +4,10 @@ export const dynamic = "force-static";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Dionis Web",
+    name: "Dionis Grecu | Dionis Web",
     short_name: "Dionis Web",
     description:
-      "Premium freelance web designer portfolio for landing pages and business websites.",
+      "Dionis Grecu freelance web developer portfolio for landing pages and business websites.",
     start_url: "/",
     display: "standalone",
     background_color: "#f8f4ed",

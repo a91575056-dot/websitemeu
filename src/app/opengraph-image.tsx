@@ -4,7 +4,7 @@ import { siteConfig } from "@/data/site";
 
 export const dynamic = "force-static";
 
-export const alt = `${siteConfig.name} website preview`;
+export const alt = `${siteConfig.personName} and ${siteConfig.name} website preview`;
 
 export const size = {
   width: 1200,
@@ -75,10 +75,10 @@ export default function OpenGraphImage() {
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                 <span style={{ fontSize: "20px", fontWeight: 700 }}>
-                  {siteConfig.name}
+                  {siteConfig.personName}
                 </span>
                 <span style={{ fontSize: "16px", color: "#475569" }}>
-                  {siteConfig.role}
+                  {siteConfig.name} - {siteConfig.role}
                 </span>
               </div>
             </div>

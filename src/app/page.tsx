@@ -72,21 +72,63 @@ const iconMap: Record<IconKey, LucideIcon> = {
 const serviceSchema = {
   "@context": "https://schema.org",
   "@type": "ProfessionalService",
-  name: siteConfig.name,
+  name: `${siteConfig.name} by ${siteConfig.personName}`,
+  alternateName: siteConfig.alternateNames,
   description: siteConfig.description,
   url: siteConfig.siteUrl,
   areaServed: "Worldwide",
   priceRange: "$40+",
   email: siteConfig.email,
+  founder: {
+    "@type": "Person",
+    name: siteConfig.personName,
+    jobTitle: siteConfig.role,
+    url: siteConfig.siteUrl,
+    sameAs: siteConfig.socials.map((social) => social.href),
+  },
+  brand: {
+    "@type": "Brand",
+    name: siteConfig.name,
+  },
 };
 
 const personSchema = {
   "@context": "https://schema.org",
   "@type": "Person",
   name: siteConfig.personName,
+  alternateName: siteConfig.alternateNames,
   jobTitle: siteConfig.role,
   url: siteConfig.siteUrl,
+  image: `${siteConfig.siteUrl}/dionis.png`,
+  description: siteConfig.description,
   knowsAbout: siteConfig.keywords,
+  sameAs: siteConfig.socials.map((social) => social.href),
+  worksFor: {
+    "@type": "Organization",
+    name: siteConfig.name,
+    url: siteConfig.siteUrl,
+  },
+  brand: {
+    "@type": "Brand",
+    name: siteConfig.name,
+  },
+};
+
+const websiteSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: siteConfig.name,
+  alternateName: siteConfig.alternateNames,
+  url: siteConfig.siteUrl,
+  description: siteConfig.description,
+  creator: {
+    "@type": "Person",
+    name: siteConfig.personName,
+  },
+  publisher: {
+    "@type": "Person",
+    name: siteConfig.personName,
+  },
 };
 
 export default function Home() {
@@ -98,7 +140,7 @@ export default function Home() {
 
   return (
     <>
-      <SchemaScript data={[serviceSchema, personSchema]} />
+      <SchemaScript data={[serviceSchema, personSchema, websiteSchema]} />
       <SiteHeader
         navItems={homeNavItems}
         siteName={siteConfig.name}

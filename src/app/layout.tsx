@@ -11,20 +11,21 @@ const sharedSocialImage = {
   url: "/opengraph-image",
   width: 1200,
   height: 630,
-  alt: `${siteConfig.name} website preview`,
+  alt: `${siteConfig.personName} and ${siteConfig.name} website preview`,
 };
+const sameAs = siteConfig.socials.map((social) => social.href);
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.siteUrl),
   title: {
     default: siteConfig.title,
-    template: `%s | ${siteConfig.name}`,
+    template: `%s | ${siteConfig.personName} - ${siteConfig.name}`,
   },
   description: siteConfig.description,
-  applicationName: siteConfig.name,
+  applicationName: `${siteConfig.name} by ${siteConfig.personName}`,
   authors: [{ name: siteConfig.personName, url: siteConfig.siteUrl }],
   creator: siteConfig.personName,
-  publisher: siteConfig.name,
+  publisher: `${siteConfig.personName} / ${siteConfig.name}`,
   keywords: siteConfig.keywords,
   alternates: {
     canonical: "/",
@@ -54,6 +55,16 @@ export const metadata: Metadata = {
     icon: [{ url: "/icon.png?v=4", type: "image/png" }],
     shortcut: "/icon.png?v=4",
     apple: "/apple-icon.png?v=4",
+  },
+  other: {
+    author: siteConfig.personName,
+    designer: siteConfig.personName,
+    developer: siteConfig.personName,
+    owner: siteConfig.personName,
+    brand: siteConfig.name,
+    "profile:first_name": "Dionis",
+    "profile:last_name": "Grecu",
+    "article:author": sameAs[0],
   },
 };
 
