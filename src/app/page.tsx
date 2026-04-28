@@ -19,11 +19,13 @@ import {
   RefreshCcw,
   Rocket,
   Search,
+  ShieldCheck,
   Smartphone,
   Sparkles,
   Star,
 } from "lucide-react";
 
+import { PayPalCheckout } from "@/components/paypal-checkout";
 import { ProjectCard } from "@/components/project-card";
 import { QuickQuoteForm } from "@/components/quick-quote-form";
 import { SchemaScript } from "@/components/schema-script";
@@ -593,6 +595,40 @@ export default function Home() {
                 </SectionReveal>
               ))}
             </div>
+          </div>
+        </section>
+
+        <section id="payment" className="section-border scroll-mt-28">
+          <div className="mx-auto w-full max-w-[104rem] px-4 py-18 sm:px-6 lg:px-8 lg:py-24">
+            <SectionReveal className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+              <div className="space-y-6">
+                <SectionHeading
+                  eyebrow="Payment"
+                  title="A simple PayPal deposit flow for confirmed projects."
+                  description="Once we agree on the scope, you can secure your project slot with a deposit through PayPal. The checkout is handled by PayPal, while the site only confirms the selected deposit."
+                />
+
+                <div className="grid gap-3">
+                  {[
+                    "Good for landing pages, redesigns, and small business websites.",
+                    "Choose a deposit only after we confirm the project together.",
+                    "Card and PayPal wallet options are handled through PayPal checkout.",
+                  ].map((item) => (
+                    <div
+                      key={item}
+                      className="flex items-start gap-3 rounded-[1.35rem] border border-slate-200 bg-white/72 px-4 py-4"
+                    >
+                      <ShieldCheck className="mt-0.5 size-5 shrink-0 text-emerald-600" />
+                      <p className="text-sm leading-7 text-slate-600 sm:text-base">
+                        {item}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <PayPalCheckout />
+            </SectionReveal>
           </div>
         </section>
 
