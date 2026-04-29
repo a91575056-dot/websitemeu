@@ -1,9 +1,12 @@
 import {
   assertMethod,
+  getPendingPayment,
   getPayPalAccessToken,
   getPayPalBaseUrl,
   json,
   readJson,
+  saveCompletedPayment,
+  sendPaymentEmails,
 } from "./paypal-shared.mjs";
 
 function isValidOrderId(value) {
@@ -25,6 +28,7 @@ export default async function handler(request) {
   }
 
   try {
+    const pendingPayment = await getPendingPayment(orderId);
     const accessToken = await getPayPalAccessToken();
     const response = await fetch(
       `${getPayPalBaseUrl()}/v2/checkout/orders/${orderId}/capture`,
@@ -55,12 +59,32 @@ export default async function handler(request) {
       payload.purchase_units?.[0]?.payments?.captures?.[0] ||
       payload.payment_source?.paypal ||
       {};
+    const completedPayment = pendingPayment
+      ? {
+          ...pendingPayment,
+          paypalStatus: payload.status,
+          captureId: capture.id || "",
+          payerEmail: payload.payer?.email_address || "",
+        }
+      : null;
+    let emailResults = null;
+
+    if (completedPayment) {
+      await saveCompletedPayment(payload.id || orderId, completedPayment);
+      emailResults = await sendPaymentEmails({
+        payment: completedPayment,
+        orderId: payload.id || orderId,
+        captureId: capture.id || "",
+      });
+    }
 
     return json({
       ok: payload.status === "COMPLETED",
       orderId: payload.id || orderId,
       status: payload.status,
       captureId: capture.id || "",
+      customerSaved: Boolean(pendingPayment),
+      email: emailResults,
     });
   } catch (error) {
     return json(

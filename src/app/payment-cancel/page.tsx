@@ -25,11 +25,11 @@ export default function PaymentCancelPage() {
               </h1>
               <p className="mx-auto mt-4 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
                 You can return to the site or message me if you want to adjust
-                the deposit amount before paying.
+                the selected package before paying.
               </p>
               <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
                 <a
-                  href={getWhatsAppLink("Hi Dionis, I want to discuss the PayPal deposit.")}
+                  href={getWhatsAppLink("Hi Dionis, I want to discuss the PayPal payment.")}
                   target="_blank"
                   rel="noreferrer"
                   className="button-primary justify-center"

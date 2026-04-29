@@ -466,7 +466,7 @@ export const pricing = [
   },
   {
     title: "Business Website",
-    price: "From $40",
+    price: "From $100",
     description:
       "Great for local businesses and freelancers who need a polished web presence fast.",
     features: [
@@ -479,7 +479,7 @@ export const pricing = [
   },
   {
     title: "Custom Project",
-    price: "Custom quote",
+    price: "From $200",
     description:
       "For redesigns, more pages, advanced sections, or a tailored visual direction.",
     features: [

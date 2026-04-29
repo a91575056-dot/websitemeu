@@ -24,15 +24,16 @@ export default function PaymentSuccessPage() {
               </div>
               <span className="eyebrow mt-6">Payment confirmed</span>
               <h1 className="font-display mt-5 text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
-                Thank you. Your deposit was received.
+                Thank you. Your payment was received.
               </h1>
               <p className="mx-auto mt-4 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
-                I will match the payment with our WhatsApp conversation and
-                continue the project from there.
+                PayPal will send its payment receipt, and I will match the
+                order with your submitted contact details and our WhatsApp
+                conversation.
               </p>
               <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
                 <a
-                  href={getWhatsAppLink("Hi Dionis, I completed the PayPal deposit.")}
+                  href={getWhatsAppLink("Hi Dionis, I completed the PayPal payment.")}
                   target="_blank"
                   rel="noreferrer"
                   className="button-primary justify-center"

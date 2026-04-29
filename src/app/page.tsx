@@ -604,15 +604,15 @@ export default function Home() {
               <div className="space-y-6">
                 <SectionHeading
                   eyebrow="Payment"
-                  title="A simple PayPal deposit flow for confirmed projects."
-                  description="Once we agree on the scope, you can secure your project slot with a deposit through PayPal. The checkout is handled by PayPal, while the site only confirms the selected deposit."
+                  title="Pay the package we agreed on through PayPal."
+                  description="The checkout mirrors the pricing above: Landing Page, Business Website, or Custom Project. Use it only after we confirm the scope together."
                 />
 
                 <div className="grid gap-3">
                   {[
-                    "Good for landing pages, redesigns, and small business websites.",
-                    "Choose a deposit only after we confirm the project together.",
-                    "Card and PayPal wallet options are handled through PayPal checkout.",
+                    "Payment options match the pricing packages above.",
+                    "Your name, email, and phone are saved with the PayPal order.",
+                    "PayPal sends its own receipt; a custom Dionis Web email can be enabled with an email provider.",
                   ].map((item) => (
                     <div
                       key={item}

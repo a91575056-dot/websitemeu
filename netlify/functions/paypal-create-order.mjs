@@ -8,6 +8,8 @@ import {
   getSiteUrl,
   json,
   readJson,
+  savePendingPayment,
+  validateCustomerInfo,
 } from "./paypal-shared.mjs";
 
 export default async function handler(request) {
@@ -19,9 +21,20 @@ export default async function handler(request) {
 
   const body = await readJson(request);
   const option = getPaymentOption(body?.packageId);
+  const customerResult = validateCustomerInfo(body?.customer);
 
   if (!option) {
     return json({ message: "Choose a valid payment option." }, 400);
+  }
+
+  if (!customerResult.ok) {
+    return json(
+      {
+        message: customerResult.errors[0] || "Please complete your details.",
+        errors: customerResult.errors,
+      },
+      400,
+    );
   }
 
   try {
@@ -90,6 +103,17 @@ export default async function handler(request) {
         response.status || 502,
       );
     }
+
+    await savePendingPayment(payload.id, {
+      orderId: payload.id,
+      packageId: option.id,
+      optionName: option.name,
+      amount: option.amount,
+      currency,
+      customer: customerResult.customer,
+      createdAt: new Date().toISOString(),
+      status: payload.status,
+    });
 
     return json({
       id: payload.id,
