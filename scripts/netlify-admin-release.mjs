@@ -21,7 +21,7 @@ function configureAccount() {
  if(metadata.id!==site || metadata.name!==siteName || !metadata.account_slug)throw new Error('Unexpected Netlify account/site metadata.');
  const params={account_id:metadata.account_slug,site_id:site};
  const existing=api('getEnvVars',params);
- const records=[{key:'ADMIN_USERNAME',scopes:['functions'],values:[{context:'all',value:account.username}],is_secret:false},{key:'ADMIN_PASSWORD_HASH',scopes:['functions'],values:['production','deploy-preview','branch-deploy'].map(context=>({context,value:account.passwordHash})),is_secret:true}];
+ const records=[{key:'ADMIN_USERNAME',values:[{context:'all',value:account.username}],is_secret:false},{key:'ADMIN_PASSWORD_HASH',values:['production','deploy-preview','branch-deploy'].map(context=>({context,value:account.passwordHash})),is_secret:true}];
  for(const record of records) {
   if(existing.some(item=>item.key===record.key))api('updateEnvVar',{...params,key:record.key,body:record});
   else api('createEnvVars',{...params,body:[record]});
@@ -36,7 +36,7 @@ if(mode==='preview') {
  if(existsSync(manifest)) throw new Error('Release manifest exists; preserve it and choose a new path for a new release.');
  if(git(['status','--porcelain'])) throw new Error('Commit the reviewed source before staging a release.');
  configureAccount();
- const raw=invoke(['deploy','--site',siteName,'--dir','out','--functions','netlify/functions','--skip-functions-cache','--context','deploy-preview','--json','--message',`Admin română preview ${git(['rev-parse','HEAD'])}`]);
+ const raw=invoke(['deploy','--site',siteName,'--dir','out','--functions','netlify/functions','--skip-functions-cache','--context','production','--json','--message',`Admin română preview ${git(['rev-parse','HEAD'])}`]);
  const start=raw.indexOf('{');if(start<0)throw new Error('No deploy JSON returned.');const d=JSON.parse(raw.slice(start));
  if(d.site_id!==site || !d.deploy_id || !d.deploy_url) throw new Error('Unexpected deployment identity.');
  writeFileSync(manifest,JSON.stringify({site,deployId:d.deploy_id,url:d.deploy_url,commit:git(['rev-parse','HEAD']),accountDigest:digest,verified:false},null,2),{mode:0o600,flag:'wx'});
