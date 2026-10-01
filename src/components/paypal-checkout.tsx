@@ -1,6 +1,7 @@
 "use client";
 
 import Script from "next/script";
+import { WalletCheckout } from "./wallet-checkout";
 import {
   CreditCard,
   FileText,
@@ -715,6 +716,11 @@ export function PayPalCheckout() {
         {config?.environment === "sandbox" ? (
           <p className="rounded-[1rem] bg-amber-50 px-4 py-3 text-sm text-amber-900">Test mode — no real money is transferred. Contact us to arrange payment.</p>
         ) : null}
+
+        {config?.enabled ? <WalletCheckout clientId={config.clientId} environment={config.environment} currency={config.currency}
+          amount={selectedOption.customAmount && customAmountValid ? Number(customAmount).toFixed(2) : selectedOption.amount}
+          enabled={customerInfoValid && amountValid}
+          order={{packageId:selectedOption.id,amount:selectedOption.customAmount ? customAmount : undefined,customer}} /> : null}
 
         <div
           ref={containerRef}

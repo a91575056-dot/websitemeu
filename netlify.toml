@@ -34,6 +34,11 @@
   status = 200
 
 [[redirects]]
+  from = "/api/paypal/wallets"
+  to = "/.netlify/functions/paypal-wallets"
+  status = 200
+
+[[redirects]]
   from = "/api/paypal/create-order"
   to = "/.netlify/functions/paypal-create-order"
   status = 200

@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@netlify/blobs": "^10.7.4",
+    "@paypal/paypal-js": "^11.2.0",
     "clsx": "^2.1.1",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.8.0",
@@ -22,6 +23,8 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/applepayjs": "^14.0.9",
+    "@types/googlepay": "^0.7.13",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
