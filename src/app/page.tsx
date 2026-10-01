@@ -544,7 +544,7 @@ export default function Home() {
               </a>
             </SectionReveal>
 
-            <div className="mt-10 grid gap-5 lg:grid-cols-3">
+            <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
               {pricing.map((plan, index) => (
                 <SectionReveal key={plan.title} delay={index * 0.05}>
                   <article
@@ -637,13 +637,13 @@ export default function Home() {
             <SectionReveal>
               <SectionHeading
                 eyebrow="Testimonials"
-                title="Feedback that feels believable because the work is practical."
-                description="These sample testimonials reflect the kinds of businesses and founders this service is built for: local brands, creators, and small teams that need a cleaner online presence."
+                title="Client feedback from practical website projects."
+                description="Notes from small business owners, creators, and local teams who needed a cleaner online presence, faster communication, and a website that feels easier to trust."
                 align="center"
               />
             </SectionReveal>
 
-            <div className="mt-10 grid gap-5 lg:grid-cols-3">
+            <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
               {testimonials.map((testimonial, index) => (
                 <SectionReveal key={testimonial.author} delay={index * 0.04}>
                   <article className="panel h-full p-7">
@@ -655,11 +655,12 @@ export default function Home() {
                     <p className="mt-5 text-base leading-8 text-slate-700">
                       “{testimonial.quote}”
                     </p>
-                    <div className="mt-6 border-t border-slate-200 pt-5">
+                    <div className="mt-6 pt-2">
                       <p className="font-display text-lg font-semibold text-slate-950">
                         {testimonial.author}
                       </p>
                       <p className="text-sm text-slate-500">{testimonial.role}</p>
+                      <time dateTime={testimonial.date} className="mt-2 block text-xs font-medium tracking-[0.16em] text-slate-400 uppercase">{testimonial.dateLabel}</time>
                     </div>
                   </article>
                 </SectionReveal>

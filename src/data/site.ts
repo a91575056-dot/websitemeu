@@ -78,6 +78,8 @@ export const siteConfig = {
       label: "Instagram",
       href: "https://www.instagram.com/dionis.grecu?igsh=MW85eWY4bzZnaGdsbA%3D%3D&utm_source=qr",
     },
+    { label: "Facebook", href: "https://www.facebook.com/share/18TtXWizwU/?mibextid=wwXIfr" },
+    { label: "YouTube", href: "https://youtube.com/@dioniswebstudio?si=WNjAt24QSfXwRD23" },
     { label: "TikTok", href: "https://www.tiktok.com/@dionisweb" },
     { label: "Fiverr", href: "https://www.fiverr.com/s/ak6qm9Q" },
   ],
@@ -497,18 +499,31 @@ export const testimonials = [
       "The site looked far more premium than the price suggested. It gave my business instant credibility.",
     author: "Mira T.",
     role: "Beauty studio owner",
+    date: "2026-04-03",
+    dateLabel: "Apr 03, 2026",
   },
   {
     quote:
       "Fast communication, clean design, and the mobile version felt incredibly polished. Clients started messaging right away.",
     author: "Daniel R.",
     role: "Personal brand coach",
+    date: "2026-04-19",
+    dateLabel: "Apr 19, 2026",
   },
   {
     quote:
       "I needed something modern and simple for my local business. The final result felt professional and easy to trust.",
     author: "Elena S.",
     role: "Restaurant manager",
+    date: "2026-05-06",
+    dateLabel: "May 06, 2026",
+  },
+  {
+    quote: "Dionis understood the direction quickly and turned a simple idea into a clean website that feels ready for real clients.",
+    author: "Alex M.",
+    role: "Local services founder",
+    date: "2026-05-17",
+    dateLabel: "May 17, 2026",
   },
 ];
 
