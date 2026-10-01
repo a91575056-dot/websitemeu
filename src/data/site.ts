@@ -66,12 +66,10 @@ export const siteConfig = {
   portfolioHref: "/portfolio",
   navItems: [
     { label: "Services", href: "/#services" },
-    { label: "Work", href: "/#portfolio" },
     { label: "About", href: "/#about" },
     { label: "Pricing", href: "/#pricing" },
     { label: "Payment", href: "/#payment" },
     { label: "FAQ", href: "/#faq" },
-    { label: "Portfolio", href: "/portfolio" },
   ],
   socials: [
     {

@@ -6,6 +6,18 @@
   NODE_VERSION = "24"
 
 [[redirects]]
+  from = "/portfolio"
+  to = "/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/portfolio/*"
+  to = "/"
+  status = 301
+  force = true
+
+[[redirects]]
   from = "https://www.dionisweb.com/*"
   to = "https://dionisweb.com/:splat"
   status = 301
