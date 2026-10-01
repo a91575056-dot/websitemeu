@@ -35,9 +35,8 @@ export function WalletCheckout(props: Props) {
   async function init() {
    try {
     const availabilityResponse = await fetch("/api/paypal/wallets");
-    if (!availabilityResponse.ok) return;
     const status:WalletStatus = await availabilityResponse.json();
-    if (!status.available || (!status.applePayEligible && !status.googlePayEligible)) return;
+    if (status.available && !status.applePayEligible && !status.googlePayEligible) return;
     const sdk = await loadCoreSdkScript({environment:props.environment === "live" ? "production" : "sandbox",dataNamespace:"paypalWallets"});
     if (!sdk || disposed) return;
     const instance = await sdk.createInstance({clientId:props.clientId,components:["applepay-payments","googlepay-payments"] as const,pageType:"checkout"});
@@ -51,7 +50,7 @@ export function WalletCheckout(props: Props) {
       setAppleReady(true);
      }
     }
-    if (status.googlePayEligible && eligible.isEligible("googlepay")) {
+    if ((status.googlePayEligible || !status.available) && eligible.isEligible("googlepay")) {
      await new Promise<void>((resolve,reject) => {
       if (window.google?.payments?.api?.PaymentsClient) {resolve();return;}
       const script=document.createElement("script");script.src="https://pay.google.com/gp/p/js/pay.js";script.async=true;
