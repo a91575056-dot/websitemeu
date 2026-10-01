@@ -195,7 +195,7 @@ export function createRequestId() {
 }
 
 export async function savePendingPayment(orderId, payment) {
-  const store = getStore(PAYMENT_STORE_NAME);
+  const store = getStore({ name: PAYMENT_STORE_NAME, consistency: "strong" });
 
   await store.setJSON(`${PENDING_PREFIX}${orderId}.json`, payment, {
     metadata: {
@@ -208,7 +208,7 @@ export async function savePendingPayment(orderId, payment) {
 }
 
 export async function getPendingPayment(orderId) {
-  const store = getStore(PAYMENT_STORE_NAME);
+  const store = getStore({ name: PAYMENT_STORE_NAME, consistency: "strong" });
 
   try {
     return await store.get(`${PENDING_PREFIX}${orderId}.json`, {
@@ -220,7 +220,7 @@ export async function getPendingPayment(orderId) {
 }
 
 export async function saveCompletedPayment(orderId, payment) {
-  const store = getStore(PAYMENT_STORE_NAME);
+  const store = getStore({ name: PAYMENT_STORE_NAME, consistency: "strong" });
   const completedAt = new Date().toISOString();
 
   await store.setJSON(

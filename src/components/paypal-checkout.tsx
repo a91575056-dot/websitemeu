@@ -712,6 +712,10 @@ export function PayPalCheckout() {
           </div>
         </div>
 
+        {config?.environment === "sandbox" ? (
+          <p className="rounded-[1rem] bg-amber-50 px-4 py-3 text-sm text-amber-900">Test mode — no real money is transferred. Contact us to arrange payment.</p>
+        ) : null}
+
         <div
           ref={containerRef}
           className="min-h-12 overflow-hidden rounded-[0.75rem]"
