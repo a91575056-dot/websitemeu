@@ -8,7 +8,7 @@ const siteName='enchanting-cajeta-137e06';
 const cli=process.env.NETLIFY_CLI_PATH||'/workspace/.cloud-tools/netlify/node_modules/.bin/netlify';
 const accountFile=process.env.ADMIN_TEST_ACCOUNT_FILE;
 const manifest=process.env.ADMIN_RELEASE_MANIFEST||'/workspace/.cloud-tools/admin-release.json';
-const env={...process.env,XDG_CONFIG_HOME:process.env.XDG_CONFIG_HOME||'/workspace/.cloud-tools/config',NETLIFY_TELEMETRY_DISABLED:'1'};
+const env={...process.env,XDG_CONFIG_HOME:process.env.XDG_CONFIG_HOME||'/workspace/.cloud-tools/config',NETLIFY_TELEMETRY_DISABLED:'1',NODE_USE_ENV_PROXY:'1',npm_config_cache:process.env.npm_config_cache||'/workspace/.npm-cache'};
 function invoke(args) {
  const result=spawnSync(cli,args,{env,encoding:'utf8',maxBuffer:16*1024*1024});
  // CLI output can include environment values; never echo it while configuring credentials.
