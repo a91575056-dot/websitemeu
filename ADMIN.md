@@ -60,7 +60,7 @@ Testul browser folosește Chromium instalat (`CHROMIUM_PATH` pentru altă locaț
 
 `NETLIFY_AUTH_TOKEN` trebuie configurat securizat cu acces la proiectul `enchanting-cajeta-137e06` (`c42e886a-dd3a-4dcb-9958-286d5417efb7`). Accesul la metadatele publice ale site-ului nu demonstrează drept de deploy. Inspectați conectarea GitHub și deploy-ul activ înainte de a publica; sursa activă anterioară nu are `commit_ref`. Repository-ul main inițial avea commitul `8f17e92a7c1aa16034054e6184ef1754b58565fa`. Conținutul public observat avea testimoniale/linkuri sociale mai noi; acestea au fost reconciliate în sursă pentru a evita regresia.
 
-După build și commit, scriptul de release configurează username/hash numai în scope-ul functions, creează un draft pe proiectul existent, verifică browserul și site-ul public, apoi promovează exact deploy-ul verificat:
+După build și commit, scriptul de release configurează username/hash în mediul serverului Netlify, cu domeniile de utilizare implicite permise de plan, creează un draft pe proiectul existent, verifică browserul și site-ul public, apoi promovează exact deploy-ul verificat:
 
 ```sh
 export ADMIN_TEST_ACCOUNT_FILE=/workspace/.cloud-tools/admin-account.json

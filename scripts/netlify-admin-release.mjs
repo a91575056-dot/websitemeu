@@ -21,7 +21,7 @@ function configureAccount() {
  if(metadata.id!==site || metadata.name!==siteName || !metadata.account_slug)throw new Error('Unexpected Netlify account/site metadata.');
  const params={account_id:metadata.account_slug,site_id:site};
  const existing=api('getEnvVars',params);
- const records=[{key:'ADMIN_USERNAME',values:[{context:'all',value:account.username}],is_secret:false},{key:'ADMIN_PASSWORD_HASH',values:['production','deploy-preview','branch-deploy'].map(context=>({context,value:account.passwordHash})),is_secret:true}];
+ const records=[{key:'ADMIN_USERNAME',values:[{context:'all',value:account.username}],is_secret:false},{key:'ADMIN_PASSWORD_HASH',scopes:['builds','functions','runtime'],values:['production','deploy-preview','branch-deploy'].map(context=>({context,value:account.passwordHash})),is_secret:true}];
  for(const record of records) {
   if(existing.some(item=>item.key===record.key))api('updateEnvVar',{...params,key:record.key,body:record});
   else api('createEnvVars',{...params,body:[record]});
