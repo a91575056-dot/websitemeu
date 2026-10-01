@@ -8,6 +8,7 @@ import {
   getSiteUrl,
   json,
   readJson,
+  resolvePaymentAmount,
   savePendingPayment,
   validateCustomerInfo,
 } from "./paypal-shared.mjs";
@@ -37,6 +38,10 @@ export default async function handler(request) {
     );
   }
 
+  let amount;
+  try { amount = resolvePaymentAmount(option, body?.amount); }
+  catch (error) { return json({ message: error.message }, 400); }
+
   try {
     const currency = getCurrency();
     const siteUrl = getSiteUrl();
@@ -57,11 +62,11 @@ export default async function handler(request) {
             description: option.description,
             amount: {
               currency_code: currency,
-              value: option.amount,
+              value: amount,
               breakdown: {
                 item_total: {
                   currency_code: currency,
-                  value: option.amount,
+                  value: amount,
                 },
               },
             },
@@ -73,7 +78,7 @@ export default async function handler(request) {
                 category: "DIGITAL_GOODS",
                 unit_amount: {
                   currency_code: currency,
-                  value: option.amount,
+                  value: amount,
                 },
               },
             ],
@@ -108,7 +113,7 @@ export default async function handler(request) {
       orderId: payload.id,
       packageId: option.id,
       optionName: option.name,
-      amount: option.amount,
+      amount: amount,
       currency,
       customer: customerResult.customer,
       createdAt: new Date().toISOString(),

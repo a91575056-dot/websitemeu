@@ -13,6 +13,14 @@ function isValidOrderId(value) {
   return typeof value === "string" && /^[A-Z0-9]{6,32}$/.test(value);
 }
 
+export function isMatchingCapture(payload, payment) {
+  const units = payload.purchase_units;
+  const captures = units?.[0]?.payments?.captures;
+  return payload.status === "COMPLETED" && units?.length === 1 && captures?.length === 1 &&
+    captures[0].status === "COMPLETED" && captures[0].amount?.currency_code === payment.currency &&
+    captures[0].amount?.value === payment.amount;
+}
+
 export default async function handler(request) {
   const methodResponse = assertMethod(request, "POST");
 
@@ -29,6 +37,7 @@ export default async function handler(request) {
 
   try {
     const pendingPayment = await getPendingPayment(orderId);
+    if (!pendingPayment) return json({ message: "Payment order not found." }, 404);
     const accessToken = await getPayPalAccessToken();
     const response = await fetch(
       `${getPayPalBaseUrl()}/v2/checkout/orders/${orderId}/capture`,
@@ -59,6 +68,9 @@ export default async function handler(request) {
       payload.purchase_units?.[0]?.payments?.captures?.[0] ||
       payload.payment_source?.paypal ||
       {};
+    if (!isMatchingCapture(payload, pendingPayment)) {
+      return json({ ok: false, message: "Payment is not completed or its amount does not match the order." }, 409);
+    }
     const completedPayment = pendingPayment
       ? {
           ...pendingPayment,

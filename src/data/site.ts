@@ -478,10 +478,10 @@ export const pricing = [
     featured: true,
   },
   {
-    title: "Custom Project",
-    price: "From $200",
+    title: "Custom",
+    price: "Custom amount",
     description:
-      "For redesigns, more pages, advanced sections, or a tailored visual direction.",
+      "A tailored project with an agreed price. Pay your chosen amount, starting at 1 USD.",
     features: [
       "Flexible scope",
       "Custom content flow",

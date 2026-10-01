@@ -605,7 +605,7 @@ export default function Home() {
                 <SectionHeading
                   eyebrow="Payment"
                   title="Pay the package we agreed on through PayPal."
-                  description="The checkout mirrors the pricing above: Landing Page, Business Website, or Custom Project. Use it only after we confirm the scope together."
+                  description="The checkout mirrors the pricing above: Landing Page, Business Website, or Custom with your chosen amount (minimum 1 USD). Use it only after we confirm the scope together."
                 />
 
                 <div className="grid gap-3">

@@ -24,10 +24,11 @@ export const paymentOptions = [
   },
   {
     id: "custom-project",
-    name: "Custom Project",
-    amount: "200.00",
-    label: "$200",
-    description: "For a confirmed larger build, redesign, or custom scope.",
+    name: "Custom",
+    amount: "1.00",
+    label: "Choose amount",
+    customAmount: true,
+    description: "Choose the agreed amount, starting at 1 USD.",
   },
 ];
 
@@ -102,6 +103,17 @@ export function validateCustomerInfo(value) {
 
 export function getPaymentOption(id) {
   return paymentOptions.find((option) => option.id === id);
+}
+
+export function resolvePaymentAmount(option, value) {
+  if (!option.customAmount) return option.amount;
+  if (typeof value !== "string" || !/^(?:0|[1-9]\d{0,5})(?:\.\d{1,2})?$/.test(value)) {
+    throw new Error("Enter a valid amount with up to two decimal places.");
+  }
+  const [whole, fraction = ""] = value.split(".");
+  const cents = Number(whole) * 100 + Number(fraction.padEnd(2, "0"));
+  if (cents < 100 || cents > 99999999) throw new Error("Custom amount must be between 1.00 and 999999.99 USD.");
+  return `${Math.floor(cents / 100)}.${String(cents % 100).padStart(2, "0")}`;
 }
 
 export function getCurrency() {
@@ -372,11 +384,12 @@ export async function sendPaymentEmails({ payment, orderId, captureId }) {
 }
 
 export function paymentOptionsForClient(currency = getCurrency()) {
-  return paymentOptions.map(({ id, name, amount, label, description }) => ({
+  return paymentOptions.map(({ id, name, amount, label, description, customAmount }) => ({
     id,
     name,
     amount,
-    label: currency === "USD" ? label : `${amount} ${currency}`,
+    customAmount: Boolean(customAmount),
+    label: customAmount ? "Choose amount" : currency === "USD" ? label : `${amount} ${currency}`,
     currency,
     description,
   }));

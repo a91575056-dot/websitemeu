@@ -18,6 +18,7 @@ type PaymentOption = {
   label: string;
   currency: string;
   description: string;
+  customAmount?: boolean;
 };
 
 type PayPalConfig = {
@@ -91,11 +92,12 @@ const fallbackOptions: PaymentOption[] = [
   },
   {
     id: "custom-project",
-    name: "Custom Project",
-    amount: "200.00",
-    label: "$200",
+    name: "Custom",
+    amount: "1.00",
+    label: "Choose amount",
+    customAmount: true,
     currency: "USD",
-    description: "For a confirmed larger build, redesign, or custom scope.",
+    description: "Choose the agreed amount, starting at 1 USD.",
   },
 ];
 
@@ -172,6 +174,7 @@ export function PayPalCheckout() {
   const [config, setConfig] = useState<PayPalConfig | null>(null);
   const [options, setOptions] = useState<PaymentOption[]>(fallbackOptions);
   const [selectedId, setSelectedId] = useState(fallbackOptions[0].id);
+  const [customAmount, setCustomAmount] = useState("1");
   const [customer, setCustomer] = useState<CustomerInfo>(initialCustomerInfo);
   const [touched, setTouched] = useState<TouchedFields>({});
   const [scriptReady, setScriptReady] = useState(false);
@@ -187,6 +190,8 @@ export function PayPalCheckout() {
     () => options.find((option) => option.id === selectedId) || options[0],
     [options, selectedId],
   );
+  const customAmountValid = /^(?:0|[1-9]\d{0,5})(?:\.\d{1,2})?$/.test(customAmount) && Number(customAmount) >= 1 && Number(customAmount) <= 999999.99;
+  const amountValid = !selectedOption.customAmount || customAmountValid;
   const customerErrors = useMemo(() => getCustomerErrors(customer), [customer]);
   const customerInfoValid = Object.keys(customerErrors).length === 0;
   const missingFieldsLabel = useMemo(() => {
@@ -280,7 +285,7 @@ export function PayPalCheckout() {
   useEffect(() => {
     const container = containerRef.current;
 
-    if (!customerInfoValid) {
+    if (!customerInfoValid || !amountValid) {
       if (container) {
         container.innerHTML = "";
       }
@@ -313,6 +318,7 @@ export function PayPalCheckout() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             packageId: selectedOption.id,
+            amount: selectedOption.customAmount ? customAmount : undefined,
             customer: customerRef.current,
           }),
         });
@@ -397,7 +403,7 @@ export function PayPalCheckout() {
       container.innerHTML = "";
       void buttons.close?.();
     };
-  }, [config?.enabled, customerInfoValid, scriptReady, selectedOption.id]);
+  }, [config?.enabled, customerInfoValid, scriptReady, selectedOption.id, selectedOption.customAmount, customAmount, amountValid]);
 
   function updateCustomer<K extends keyof CustomerInfo>(
     key: K,
@@ -664,6 +670,15 @@ export function PayPalCheckout() {
             );
           })}
           </div>
+          {selectedOption.customAmount ? (
+            <label className="block space-y-2 text-sm font-medium text-slate-700">
+              <span>Custom amount (USD)</span>
+              <input type="number" inputMode="decimal" min="1" max="999999.99" step="0.01" value={customAmount}
+                onChange={(event) => setCustomAmount(event.target.value)} className="input-field" aria-invalid={!customAmountValid} />
+              <span className="block text-sm text-slate-500">Choose the amount agreed for your project. Minimum 1 USD.</span>
+              {!customAmountValid ? <span role="alert" className="block text-rose-600">Enter at least 1 USD, with up to two decimal places.</span> : null}
+            </label>
+          ) : null}
         </div>
 
         <div className="space-y-4 border-t border-slate-200 pt-6">
