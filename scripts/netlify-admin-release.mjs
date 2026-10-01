@@ -41,7 +41,9 @@ if(mode==='preview') {
  if(existsSync(manifest)) throw new Error('Release manifest exists; preserve it and choose a new path for a new release.');
  if(git(['status','--porcelain'])) throw new Error('Commit the reviewed source before staging a release.');
  configureAccount();
- const raw=invoke(['deploy','--site',siteName,'--dir','out','--functions','netlify/functions','--build','--skip-functions-cache','--context','production','--json','--message',`Admin română preview ${git(['rev-parse','HEAD'])}`]);
+ const build=spawnSync('npm',['run','build'],{env,encoding:'utf8',maxBuffer:16*1024*1024});
+ if(build.status!==0)throw new Error('Repository production build failed; deploy blocked.');
+ const raw=invoke(['deploy','--site',siteName,'--dir','out','--functions','netlify/functions','--no-build','--skip-functions-cache','--json','--message',`Admin română preview ${git(['rev-parse','HEAD'])}`]);
  const start=raw.indexOf('{');if(start<0)throw new Error('No deploy JSON returned.');const d=JSON.parse(raw.slice(start));
  if(d.site_id!==site || !d.deploy_id || !d.deploy_url) throw new Error('Unexpected deployment identity.');
  writeFileSync(manifest,JSON.stringify({site,deployId:d.deploy_id,url:d.deploy_url,commit:git(['rev-parse','HEAD']),accountDigest:digest,verified:false},null,2),{mode:0o600,flag:'wx'});
