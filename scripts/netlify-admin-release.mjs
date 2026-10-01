@@ -12,7 +12,12 @@ const env={...process.env,XDG_CONFIG_HOME:process.env.XDG_CONFIG_HOME||'/workspa
 function invoke(args) {
  const result=spawnSync(cli,args,{env,encoding:'utf8',maxBuffer:16*1024*1024});
  // CLI output can include environment values; never echo it while configuring credentials.
- if(result.status!==0) throw new Error(`Netlify command ${args[0]} failed (exit ${result.status}); verify account permissions and authentication. Output withheld to protect secrets.`);
+ if(result.status!==0) {
+  let diagnostic=(result.stderr||'').split('\n').filter(line=>/Error:|ERROR|failed|Missing|only available/.test(line)).slice(-5).join('\n');
+  for(const value of [account.password,account.passwordHash,process.env.NETLIFY_AUTH_TOKEN])if(value)diagnostic=diagnostic.replaceAll(value,'[redacted]');
+  diagnostic=diagnostic.replace(/nfp_[A-Za-z0-9_-]+/g,'[redacted]');
+  throw new Error(`Netlify command ${args[0]} failed (exit ${result.status}). ${diagnostic}`);
+ }
  return result.stdout;
 }
 function api(operation, params) { return JSON.parse(invoke(['api',operation,'--data',JSON.stringify(params)])); }
@@ -36,7 +41,7 @@ if(mode==='preview') {
  if(existsSync(manifest)) throw new Error('Release manifest exists; preserve it and choose a new path for a new release.');
  if(git(['status','--porcelain'])) throw new Error('Commit the reviewed source before staging a release.');
  configureAccount();
- const raw=invoke(['deploy','--site',siteName,'--dir','out','--functions','netlify/functions','--skip-functions-cache','--context','production','--json','--message',`Admin română preview ${git(['rev-parse','HEAD'])}`]);
+ const raw=invoke(['deploy','--site',siteName,'--dir','out','--functions','netlify/functions','--build','--skip-functions-cache','--context','production','--json','--message',`Admin română preview ${git(['rev-parse','HEAD'])}`]);
  const start=raw.indexOf('{');if(start<0)throw new Error('No deploy JSON returned.');const d=JSON.parse(raw.slice(start));
  if(d.site_id!==site || !d.deploy_id || !d.deploy_url) throw new Error('Unexpected deployment identity.');
  writeFileSync(manifest,JSON.stringify({site,deployId:d.deploy_id,url:d.deploy_url,commit:git(['rev-parse','HEAD']),accountDigest:digest,verified:false},null,2),{mode:0o600,flag:'wx'});
