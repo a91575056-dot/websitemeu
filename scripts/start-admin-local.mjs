@@ -1,0 +1,13 @@
+import { readFileSync } from 'node:fs';
+import { spawn } from 'node:child_process';
+const file=process.env.ADMIN_TEST_ACCOUNT_FILE;
+if(!file) throw new Error('Set ADMIN_TEST_ACCOUNT_FILE to a private account file outside the checkout.');
+const account=JSON.parse(readFileSync(file,'utf8'));
+const env={...process.env,ADMIN_USERNAME:account.username,ADMIN_PASSWORD_HASH:account.passwordHash,XDG_CONFIG_HOME:process.env.XDG_CONFIG_HOME||'/workspace/.cloud-tools/config',NETLIFY_TELEMETRY_DISABLED:'1',npm_config_cache:process.env.npm_config_cache||'/workspace/.npm-cache'};
+const args=['dev','--offline','--no-open','--skip-gitignore','--internal-disable-edge-functions','--port','8888','--functions-port','9999'];
+if(process.argv.includes('--static'))args.push('--framework','#static','--dir','out','--target-port','3999');
+else args.push('--framework','next','--command','npm run dev -- --hostname 127.0.0.1','--target-port','3000');
+const child=spawn(process.env.NETLIFY_CLI_PATH||'/workspace/.cloud-tools/netlify/node_modules/.bin/netlify',args,{env,stdio:'inherit'});
+child.on('error',()=>{console.error('Netlify Dev could not start.');process.exitCode=1;});
+child.on('exit',code=>{process.exitCode=code??1;});
+for(const signal of ['SIGINT','SIGTERM'])process.on(signal,()=>child.kill(signal));
