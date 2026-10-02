@@ -1,9 +1,11 @@
 // Browser contract tests use simulated provider SDKs. They never authorize real payments.
 import{chromium}from'playwright';import assert from'node:assert/strict';
+import { paymentOptionsForClient } from '../netlify/functions/paypal-shared.mjs';
 const base=process.env.SITE_TEST_URL||'http://127.0.0.1:8888';
 const browser=await chromium.launch({executablePath:'/usr/bin/chromium',headless:true,args:['--no-sandbox'],proxy:new URL(base).hostname==='127.0.0.1'?undefined:{server:process.env.HTTPS_PROXY}});
 async function scenario({eligible=true,domain=true,threeDS=false,reject3DS=false,kind='google',captureOK=true}){
  const page=await browser.newPage();const orders=[];let captures=0;
+ await page.route('**/api/paypal/config',r=>r.fulfill({json:{enabled:true,clientId:'local-sdk-contract-only',currency:'USD',environment:'sandbox',paymentOptions:paymentOptionsForClient('USD')}}));
  await page.route('**/api/paypal/wallets',r=>r.fulfill({json:{available:true,applePayEligible:eligible,googlePayEligible:eligible,appleDomainVerified:domain}}));
  await page.route('**/api/paypal/create-order',r=>{orders.push(r.request().postDataJSON());return r.fulfill({json:{id:'TESTORDER123',status:'CREATED'}});});
  await page.route('**/api/paypal/capture-order',r=>{captures++;return r.fulfill({status:captureOK?200:409,json:{ok:captureOK,orderId:'TESTORDER123',message:'Capture not completed'}});});

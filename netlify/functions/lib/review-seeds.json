@@ -1,0 +1,50 @@
+[
+  {
+    "id": "static-1",
+    "name": "Mira T.",
+    "project": "Beauty studio owner",
+    "message": "The site looked far more premium than the price suggested. It gave my business instant credibility.",
+    "createdAt": "2026-04-03T12:00:00.000Z",
+    "rating": 5,
+    "website": "",
+    "status": "approved",
+    "published": true,
+    "source": "existing-homepage"
+  },
+  {
+    "id": "static-2",
+    "name": "Daniel R.",
+    "project": "Personal brand coach",
+    "message": "Fast communication, clean design, and the mobile version felt incredibly polished. Clients started messaging right away.",
+    "createdAt": "2026-04-19T12:00:00.000Z",
+    "rating": 5,
+    "website": "",
+    "status": "approved",
+    "published": true,
+    "source": "existing-homepage"
+  },
+  {
+    "id": "static-3",
+    "name": "Elena S.",
+    "project": "Restaurant manager",
+    "message": "I needed something modern and simple for my local business. The final result felt professional and easy to trust.",
+    "createdAt": "2026-05-06T12:00:00.000Z",
+    "rating": 5,
+    "website": "",
+    "status": "approved",
+    "published": true,
+    "source": "existing-homepage"
+  },
+  {
+    "id": "static-4",
+    "name": "Alex M.",
+    "project": "Local services founder",
+    "message": "Dionis understood the direction quickly and turned a simple idea into a clean website that feels ready for real clients.",
+    "createdAt": "2026-05-17T12:00:00.000Z",
+    "rating": 5,
+    "website": "",
+    "status": "approved",
+    "published": true,
+    "source": "existing-homepage"
+  }
+]

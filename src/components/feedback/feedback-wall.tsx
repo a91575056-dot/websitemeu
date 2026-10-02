@@ -1,10 +1,9 @@
 "use client";
 
-import Link from "next/link";
-import { Loader2, MessageSquarePlus, RefreshCw, Star } from "lucide-react";
+import { Loader2, RefreshCw, Star } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { testimonials } from "@/data/site";
+
 
 type PublicFeedback = {
   id: string;
@@ -70,22 +69,8 @@ export function FeedbackWall() {
     () => (averageRating ? averageRating.toFixed(1) : "0.0"),
     [averageRating],
   );
-  const fallbackItems = useMemo(
-    () =>
-      testimonials.map((testimonial, index) => ({
-        id: `site-testimonial-${index}`,
-        name: testimonial.author,
-        project: testimonial.role,
-        rating: 5,
-        message: testimonial.quote,
-        website: "",
-        createdAt: "",
-        source: "Existing website testimonial",
-      })),
-    [],
-  );
-  const displayItems = items.length ? items : fallbackItems;
-  const displayAverageRating = items.length ? ratingLabel : "5.0";
+  const displayItems = items;
+  const displayAverageRating = ratingLabel;
 
   return (
     <div className="space-y-8">
@@ -118,10 +103,7 @@ export function FeedbackWall() {
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row">
-        <Link href="/feedback" className="button-primary justify-center">
-          <MessageSquarePlus className="size-4" />
-          Leave feedback
-        </Link>
+
         <button
           type="button"
           onClick={loadFeedback}
@@ -160,7 +142,7 @@ export function FeedbackWall() {
             No public feedback yet.
           </p>
           <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-slate-600">
-            The first feedback submitted through the form will appear here automatically.
+            Reviews appear here only after approval and publication.
           </p>
         </div>
       ) : null}

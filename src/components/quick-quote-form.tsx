@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowRight, MessageCircle } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 import { getWhatsAppLink, siteConfig } from "@/data/site";
 
@@ -22,19 +22,22 @@ export function QuickQuoteForm() {
   const [timeline, setTimeline] = useState(timelines[0]);
   const [details, setDetails] = useState("");
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  const [email,setEmail]=useState(''),[phone,setPhone]=useState(''),[consent,setConsent]=useState(false),[busy,setBusy]=useState(false),[notice,setNotice]=useState('');
+  const startedAt=useRef(0),submissionId=useRef('');
+  useEffect(()=>{startedAt.current=Date.now();},[]);
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const message = [
-      `Hi ${siteConfig.personName}, I would like a website quote.`,
-      `Name: ${name || "Not provided"}`,
-      `Business: ${business || "Not provided"}`,
-      `Project type: ${projectType}`,
-      `Timeline: ${timeline}`,
-      `Project details: ${details || "Not provided"}`,
-    ].join("\n");
+    setBusy(true);setNotice('');
+    try {
+      submissionId.current ||= crypto.randomUUID();
+      const r=await fetch('/api/leads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:submissionId.current,name,email,phone,business,projectType,timeline,details,consent,startedAt:startedAt.current,website:new FormData(event.currentTarget).get('website')})});
+      const d=await r.json();if(!r.ok)throw Error(d.message);
+      window.dispatchEvent(new Event('dionis-quote-start'));
+      setNotice('Your request has been saved. Continue on WhatsApp below.');
+      submissionId.current='';
+    }catch(e){setNotice(e instanceof Error?e.message:'Please try again or contact us directly.');}finally{setBusy(false);}
 
-    window.open(getWhatsAppLink(message), "_blank", "noopener,noreferrer");
   }
 
   return (
@@ -42,10 +45,10 @@ export function QuickQuoteForm() {
       <div className="space-y-2">
         <span className="eyebrow">Quick quote</span>
         <h3 className="font-display text-2xl font-semibold tracking-tight text-slate-950">
-          Start with WhatsApp and get a fast reply.
+          Request a quote and get a fast reply.
         </h3>
         <p className="text-sm leading-6 text-slate-600 sm:text-base">
-          Share a few details and the form will open your WhatsApp chat. Prefer
+          Your request is securely sent to Dionis. You can also continue on WhatsApp after sending. Prefer
           email instead? Use{" "}
           <a
             href={`mailto:${siteConfig.email}`}
@@ -61,6 +64,7 @@ export function QuickQuoteForm() {
         <label className="space-y-2 text-sm font-medium text-slate-700">
           Name
           <input
+            required minLength={2} maxLength={160}
             value={name}
             onChange={(event) => setName(event.target.value)}
             type="text"
@@ -112,6 +116,7 @@ export function QuickQuoteForm() {
       <label className="space-y-2 text-sm font-medium text-slate-700">
         What do you need?
         <textarea
+          required minLength={10} maxLength={2000}
           value={details}
           onChange={(event) => setDetails(event.target.value)}
           rows={5}
@@ -120,10 +125,18 @@ export function QuickQuoteForm() {
         />
       </label>
 
+      <div className="grid gap-4 sm:grid-cols-2">
+        <label className="space-y-2 text-sm font-medium text-slate-700">Email<input className="input-field" type="email" required maxLength={160} value={email} onChange={e=>setEmail(e.target.value)}/></label>
+        <label className="space-y-2 text-sm font-medium text-slate-700">Phone (optional)<input className="input-field" type="tel" maxLength={60} value={phone} onChange={e=>setPhone(e.target.value)}/></label>
+      </div>
+      <label style={{display:'none'}} aria-hidden="true">Website<input name="website" tabIndex={-1} autoComplete="off"/></label>
+      <label className="flex items-start gap-3 text-sm text-slate-600"><input type="checkbox" required checked={consent} onChange={e=>setConsent(e.target.checked)}/>I agree that Dionis may store my contact details and request to respond and prepare an offer. This does not subscribe me to marketing. I can request deletion by email.</label>
+      {notice&&<p role="status" className="text-sm">{notice}</p>}
+      {notice.startsWith('Your request has been saved')&&<a className="button-secondary" href={getWhatsAppLink(`Hi ${siteConfig.personName}, I sent a quote request. Name: ${name}. Email: ${email}. Project: ${projectType}. ${details}`)} target="_blank" rel="noopener noreferrer">Continue on WhatsApp</a>}
       <div className="flex flex-col gap-3 sm:flex-row">
-        <button type="submit" className="button-primary justify-center">
+        <button disabled={busy} type="submit" className="button-primary justify-center">
           <MessageCircle className="size-4" />
-          Send on WhatsApp
+          {busy ? "Sending…" : "Send quote request"}
         </button>
         <a
           href={`mailto:${siteConfig.email}`}

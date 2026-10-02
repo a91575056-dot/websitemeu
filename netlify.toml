@@ -60,3 +60,13 @@
     X-Frame-Options = "DENY"
     Referrer-Policy = "same-origin"
     Cache-Control = "no-store"
+
+[[redirects]]
+  from = "/api/analytics"
+  to = "/.netlify/functions/analytics"
+  status = 200
+
+[[redirects]]
+  from = "/api/leads"
+  to = "/.netlify/functions/leads"
+  status = 200

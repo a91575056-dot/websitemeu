@@ -1,3 +1,4 @@
+import { SiteAnalytics } from "@/components/site-analytics";
 import type { Metadata } from "next";
 import type { Viewport } from "next";
 
@@ -83,7 +84,7 @@ export default function RootLayout({
       data-scroll-behavior="smooth"
       className={`${manrope.variable} ${spaceGrotesk.variable} h-full scroll-smooth antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">{children}<SiteAnalytics /></body>
     </html>
   );
 }
