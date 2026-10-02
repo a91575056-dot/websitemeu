@@ -45,9 +45,25 @@ test('analytics aggregates real events, daily uniques, no raw private fields, de
  await Promise.all(Array.from({length:5},()=>recordEvent(db,{...b,id:randomUUID()},req,{ip:'1.2.3.4'})));
  await recordEvent(db,{...b,event:'checkout_start',id:randomUUID()},req,{ip:'1.2.3.4'});
  const report=await analyticsReport(db,7);assert.equal(report.pageviews,6);assert.equal(report.dailyUniqueSum,1);assert.equal(report.events.checkout_start,1);assert.equal(report.sources.Google,6);assert.equal(report.devices.Mobil,6);
- assert.doesNotMatch(JSON.stringify(report),/visitors|1\.2\.3\.4|Mozilla|private/);assert.doesNotMatch(JSON.stringify([...db.entries.values()]),/1\.2\.3\.4|Mozilla|private/);
+ assert.doesNotMatch(JSON.stringify(report),/visitors|Mozilla|private/);assert.doesNotMatch(JSON.stringify([...db.entries.values()]),/Mozilla|private/);
+ assert.equal(report.connections[0].ip,'1.2.3.4');assert.equal(report.connections[0].pageviews,6);assert.equal(report.connectionCount,1);
  await recordEvent(db,{...b,id:randomUUID()},request('/api/analytics',{}, {'User-Agent':'Googlebot'}),{ip:'other'});assert.equal((await analyticsReport(db,7)).pageviews,6);
  const h=createAnalyticsHandler(()=>db);assert.equal((await h(request('/api/analytics'))).status,405);assert.equal((await h(request('/api/analytics',b,{Origin:'https://evil.test'}))).status,403);
  await db.setJSON('days/2020-01-01/0.json',{});await cleanupAnalytics(db);assert.equal(await db.get('days/2020-01-01/0.json'),null);
  await assert.rejects(()=>analyticsReport(db,100));
+});
+test('location uses trusted Netlify context, repeated views count, old shards remain readable, public responses never expose IP',async()=>{
+ const db=new DB(),req=request('/api/analytics',{}, {'User-Agent':'Mozilla Desktop'});
+ const context={ip:'203.0.113.9',geo:{country:{name:'Romania',code:'RO'},city:'Bucharest',subdivision:{name:'București'}}};
+ const b={path:'/',event:'pageview',id:randomUUID(),ip:'198.51.100.1',country:'Fake',city:'Fake'};
+ const h=createAnalyticsHandler(()=>db);const response=await h(request('/api/analytics',b,{'User-Agent':'Mozilla Desktop'}),context);
+ assert.equal(response.status,200);assert.deepEqual(await response.json(),{ok:true});
+ await recordEvent(db,{...b,id:randomUUID()},req,context);
+ await recordEvent(db,{...b,id:randomUUID(),event:'whatsapp_click'},req,context);
+ const report=await analyticsReport(db,7);assert.equal(report.dailyUniqueSum,1);assert.equal(report.countries.Romania,2);assert.equal(report.cities['Bucharest · Romania'],2);
+ assert.deepEqual(report.connections.map(v=>({ip:v.ip,country:v.country,city:v.city,pageviews:v.pageviews,clicks:v.clicks})),[{ip:'203.0.113.9',country:'Romania',city:'Bucharest',pageviews:2,clicks:1}]);
+ assert.ok(report.locationsInstalledAt);assert.doesNotMatch(JSON.stringify(report),/198\.51\.100\.1|Fake|Mozilla/);
+ await recordEvent(db,{...b,id:randomUUID()},req,{ip:'203.0.113.10'});assert.equal((await analyticsReport(db,7)).countries['Necunoscută'],1);
+ const today=new Date().toISOString().slice(0,10);await db.setJSON(`days/${today}/legacy.json`,{day:today,pageviews:2,visitors:{old:{minute:1,count:1}},pages:{'/':2},sources:{},devices:{},events:{}});
+ const legacy=await analyticsReport(db,7);assert.equal(legacy.pageviews,5);assert.equal(legacy.dailyUniqueSum,3);assert.equal(legacy.connectionCount,2);
 });
