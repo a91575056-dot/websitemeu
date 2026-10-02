@@ -12,7 +12,7 @@ type SubmitState =
 
 const initialState: SubmitState = { status: "idle", message: "" };
 
-export function FeedbackForm() {
+export function FeedbackForm({invitation}:{invitation:string}) {
   const [startedAt] = useState(() => Date.now());
   const [name, setName] = useState("");
   const [project, setProject] = useState("");
@@ -37,6 +37,7 @@ export function FeedbackForm() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          invitation,
           startedAt,
           name,
           project,

@@ -1,5 +1,5 @@
 import { leadsStore, readLeads, saveLead } from './lib/leads-core.mjs';
-import { reviewStore, listReviews, saveReview } from './lib/reviews-core.mjs';
+import { reviewStore, listReviews, saveReview, createInvitation, listInvitations, revokeInvitation } from './lib/reviews-core.mjs';
 import { analyticsStore, analyticsReport } from './lib/analytics-core.mjs';
 import { store, hash, fail, verifyPassword, token, cookie, sessionToken, sameOrigin, authenticate, authorizeMutation, readWorkspace, writeWorkspace, mutate, dashboard } from './lib/admin-core.mjs';
 import { checkSite } from './lib/admin-monitor-core.mjs';
@@ -44,6 +44,9 @@ export function createHandler(getDb=store, getReviews=reviewStore, getAnalytics=
     if(action==='session' && request.method==='GET') return respond({username:session.username,csrf:session.csrf});
     if(request.method==='POST') authorizeMutation(request,session);
     if(action==='logout' && request.method==='POST') { await db.delete(`sessions/${hash(sessionToken(request))}`); return respond({ok:true},200,{'Set-Cookie':cookie(request,'',0)}); }
+    if(action==='invitation-create' && request.method==='POST')return respond(await createInvitation(getReviews(context),body,session.username));
+    if(action==='invitations' && request.method==='GET')return respond({invitations:await listInvitations(getReviews(context))});
+    if(action==='invitation-revoke' && request.method==='POST')return respond(await revokeInvitation(getReviews(context),body));
     if(action==='reviews' && request.method==='GET') return respond({reviews:await listReviews(getReviews(context),true)});
     if(action==='review-save' && request.method==='POST') return respond(await saveReview(getReviews(context),body,session.username));
     if(action==='leads' && request.method==='GET')return respond((await readLeads(getLeads(context))).data);

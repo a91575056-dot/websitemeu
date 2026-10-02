@@ -1,5 +1,5 @@
 import { getStore } from '@netlify/blobs';
-import { randomUUID, createHmac } from 'node:crypto';
+import { randomUUID, randomBytes, createHash, createHmac } from 'node:crypto';
 import { fail } from './admin-core.mjs';
 import seeds from './review-seeds.json' with { type: 'json' };
 export const reviewStore = context => getStore({name: context?.deploy && !context.deploy.published ? `reviews-preview-${context.deploy.id}` : 'dionis-feedback', consistency:'strong'});
@@ -49,13 +49,45 @@ export async function limitSubmissions(db,ip) {
  const r=await db.setJSON(key,{count},item?{onlyIfMatch:item.etag}:{onlyIfNew:true});if(!r.modified)fail('Reîncearcă mai târziu.',429);
 }
 export async function submitReview(db,body,ip) {
- if(body.website)return {ok:true};
+ const invitation=await validInvitation(db,body.invitation);
+ if(body.website)fail('Date invalide.');
  const r=validateReview(body);if(body.approvedForPublic!==true)fail('Confirmă acordul pentru publicare.');
  if(!Number.isFinite(body.startedAt)||Date.now()-body.startedAt<2500||Date.now()-body.startedAt>86400000)fail('Completează formularul și reîncearcă.');
  await limitSubmissions(db,ip);
+ const claimed=await db.setJSON(invitation.key,{...invitation.data,usedAt:new Date().toISOString()},{onlyIfMatch:invitation.etag});
+ if(!claimed.modified)fail('Invitația a fost deja utilizată.',409);
  const id=randomUUID(),createdAt=new Date().toISOString();
- await db.setJSON(`entries/${createdAt.replaceAll(':','-')}-${id}.json`,{...r,id,createdAt,status:'pending',published:false,consentAt:createdAt,source:'client-form'},{onlyIfNew:true});
+ await db.setJSON(`entries/${createdAt.replaceAll(':','-')}-${id}.json`,{...r,id,createdAt,status:'pending',published:false,consentAt:createdAt,source:'client-invitation',invitationId:invitation.key.split('/')[1],invitedClient:invitation.data.client},{onlyIfNew:true});
  return {ok:true,message:'Review primit. Va fi afișat numai după aprobare.'};
 }
 
 export async function cleanupReviewLimits(db){const {blobs}=await db.list({prefix:'limits/'});const hour=Math.floor(Date.now()/3600000);for(const b of blobs)if(Number(b.key.split('/')[1].split('-')[0])<hour-24)await db.delete(b.key);}
+
+const invitationKey = value => {
+ if(typeof value!=='string'||! /^[a-f0-9]{64}$/.test(value))fail('Invitație necesară.',403);
+ return `invitations/${createHash('sha256').update(value).digest('hex')}`;
+};
+export async function validInvitation(db,value){
+ const key=invitationKey(value),item=await db.getWithMetadata(key,{type:'json'});
+ if(!item||item.data.revoked||item.data.usedAt||item.data.expiresAt<=Date.now())fail('Invitație invalidă, expirată sau utilizată.',403);
+ return {...item,key};
+}
+export async function createInvitation(db,body,username){
+ const client=typeof body.client==='string'?body.client.trim():'';
+ const days=Number(body.days);
+ if(client.length<2||client.length>100||!Number.isInteger(days)||days<1||days>30)fail('Client și expirare (1–30 zile) necesare.');
+ const value=randomBytes(32).toString('hex'),expiresAt=Date.now()+days*86400000;
+ await db.setJSON(invitationKey(value),{client,expiresAt,createdAt:new Date().toISOString(),createdBy:username},{onlyIfNew:true});
+ return {token:value,expiresAt};
+}
+export async function listInvitations(db){
+ const {blobs}=await db.list({prefix:'invitations/'});
+ return Promise.all(blobs.map(async({key})=>({key,...await db.get(key,{type:'json'})})));
+}
+export async function revokeInvitation(db,body){
+ if(typeof body.key!=='string'||!/^invitations\/[a-f0-9]{64}$/.test(body.key))fail('Invitație invalidă.');
+ const current=await db.getWithMetadata(body.key,{type:'json'});if(!current)fail('Invitație inexistentă.',404);
+ const result=await db.setJSON(body.key,{...current.data,revoked:true},{onlyIfMatch:current.etag});if(!result.modified)fail('Reîncarcă invitațiile.',409);
+ if(body.remove===true)await db.delete(body.key);
+ return {ok:true};
+}

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import { listReviews, saveReview } from '../netlify/functions/lib/reviews-core.mjs';
+import { listReviews, saveReview, createInvitation, revokeInvitation } from '../netlify/functions/lib/reviews-core.mjs';
 import { recordEvent, analyticsReport, cleanupAnalytics } from '../netlify/functions/lib/analytics-core.mjs';
 import { createFeedbackHandler } from '../netlify/functions/feedback.mjs';
 import { createAnalyticsHandler } from '../netlify/functions/analytics.mjs';
@@ -13,22 +13,32 @@ const request=(path,body,headers={})=>new Request('https://example.test'+path,{m
 const body=()=>({name:'Client test',project:'Website',message:'Comunicare și design foarte bune.',rating:4,clientWebsite:'https://example.com',approvedForPublic:true,startedAt:Date.now()-5000,website:''});
 test('preserves legacy records; imports homepage once; pending never leaks; approval, hide, reject, edit, stale ETag, deletion survive reload',async()=>{
  const db=new DB();await db.setJSON('entries/old.json',{id:'old',name:'Old',message:'Old review content',rating:5,createdAt:'2025-01-01'});
- const handler=createFeedbackHandler(()=>db);let r=await handler(request('/api/feedback',body()),{ip:'1.2.3.4'});assert.equal(r.status,200);
+ const handler=createFeedbackHandler(()=>db);let r=await handler(request('/api/feedback',{...body(),invitation:(await createInvitation(db,{client:'Client test',days:7},'dionis')).token}),{ip:'1.2.3.4'});assert.equal(r.status,200);
  let all=await listReviews(db,true);assert.equal(all.length,6);assert.equal(all.find(x=>x.id==='old').status,'pending');assert.equal((await listReviews(db)).length,4);
- const item=all.find(x=>x.source==='client-form');const record={...item,clientWebsite:item.website,status:'approved',published:true};await saveReview(db,{key:item.key,etag:item.etag,record},'dionis');assert.equal((await listReviews(db)).length,5);
+ const item=all.find(x=>x.source==='client-invitation');const record={...item,clientWebsite:item.website,status:'approved',published:true};await saveReview(db,{key:item.key,etag:item.etag,record},'dionis');assert.equal((await listReviews(db)).length,5);
  await assert.rejects(()=>saveReview(db,{key:item.key,etag:item.etag,record},'dionis'),e=>e.status===409);
  let latest=(await listReviews(db,true)).find(x=>x.id===item.id);await saveReview(db,{key:latest.key,etag:latest.etag,record:{...record,message:'Edited review content.',published:false}},'dionis');assert.equal((await listReviews(db)).length,4);
  latest=(await listReviews(db,true)).find(x=>x.id===item.id);await assert.rejects(()=>saveReview(db,{key:latest.key,etag:latest.etag,record:{...record,status:'rejected'}},'dionis'));
  await saveReview(db,{key:latest.key,etag:latest.etag,record:{...record,status:'rejected',published:false}},'dionis');assert.equal((await listReviews(db,true)).find(x=>x.id===item.id).status,'rejected');
  const seed=(await listReviews(db,true)).find(x=>x.source==='existing-homepage');await saveReview(db,{key:seed.key,etag:seed.etag,remove:true},'dionis');await db.delete('migration/static-v1');assert.equal((await listReviews(db,true)).some(x=>x.id===seed.id),false);assert.ok(await db.get('entries/old.json'));
 });
-test('submission enforces consent, length, rating, protocol, origin, honeypot, timing and persistent limits',async()=>{
+test('invitations block direct submission, expire, revoke, enforce validation and are single use under concurrency',async()=>{
  const db=new DB(),h=createFeedbackHandler(()=>db);
- for(const change of [{approvedForPublic:false},{rating:6},{message:'short'},{name:'x'},{clientWebsite:'javascript:alert(1)'},{message:'x'.repeat(901)},{startedAt:Date.now()}])assert.equal((await h(request('/api/feedback',{...body(),...change}),{ip:'same'})).status,400);
- assert.equal((await h(request('/api/feedback',body(),{Origin:'https://evil.test'}))).status,403);
- assert.equal((await h(request('/api/feedback',{...body(),website:'spam'}))).status,200);assert.equal((await db.list({prefix:'entries/'})).blobs.length,0);
- for(let i=0;i<5;i++)assert.equal((await h(request('/api/feedback',body()),{ip:'same'})).status,200);
- assert.equal((await createFeedbackHandler(()=>db)(request('/api/feedback',body()),{ip:'same'})).status,429);
+ assert.equal((await h(request('/api/feedback',body()),{ip:'same'})).status,403);
+ assert.equal(db.entries.size,0);
+ const invite=await createInvitation(db,{client:'Client test',days:7},'dionis');
+ for(const change of [{approvedForPublic:false},{rating:6},{message:'short'},{name:'x'},{clientWebsite:'javascript:alert(1)'},{message:'x'.repeat(901)},{startedAt:Date.now()},{website:'spam'}])assert.equal((await h(request('/api/feedback',{...body(),invitation:invite.token,...change}),{ip:'same'})).status,400);
+ assert.equal((await h(request('/api/feedback',{...body(),invitation:invite.token},{Origin:'https://evil.test'}))).status,403);
+ const responses=await Promise.all(Array.from({length:5},()=>h(request('/api/feedback',{...body(),invitation:invite.token}),{ip:'same'})));
+ assert.equal(responses.filter(r=>r.status===200).length,1);
+ assert.equal((await db.list({prefix:'entries/'})).blobs.length,1);
+ assert.equal((await h(request('/api/feedback',{...body(),invitation:invite.token}),{ip:'same'})).status,403);
+ const other=await createInvitation(db,{client:'Client test',days:1},'dionis');
+ const key=[...db.entries.keys()].find(k=>k.startsWith('invitations/')&&!db.entries.get(k).data.usedAt);
+ await revokeInvitation(db,{key});assert.equal((await h(request('/api/feedback',{...body(),invitation:other.token}),{ip:'other'})).status,403);
+ const expired=await createInvitation(db,{client:'Client test',days:1},'dionis');
+ const expiredKey=[...db.entries.keys()].find(k=>k.startsWith('invitations/')&&!db.entries.get(k).data.usedAt&&!db.entries.get(k).data.revoked);db.entries.get(expiredKey).data.expiresAt=Date.now()-1;
+ assert.equal((await h(request('/api/feedback',{...body(),invitation:expired.token}),{ip:'other'})).status,403);
 });
 test('private reviews and analytics require admin role and mutation CSRF',async()=>{
  const db=new DB(),reviews=new DB(),stats=new DB(),h=createHandler(()=>db,()=>reviews,()=>stats);

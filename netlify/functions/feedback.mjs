@@ -1,9 +1,10 @@
-import { reviewStore, listReviews, submitReview } from './lib/reviews-core.mjs';
+import { reviewStore, listReviews, submitReview, validInvitation } from './lib/reviews-core.mjs';
 import { sameOrigin, fail } from './lib/admin-core.mjs';
 export function createFeedbackHandler(getDb=reviewStore) {
  return async(request,context)=>{
  const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:{'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
  try {
+  if(request.method==='GET' && request.headers.has('X-Review-Invitation')) {await validInvitation(getDb(context),request.headers.get('X-Review-Invitation'));return json({ok:true});}
   if(request.method==='GET') {const feedback=await listReviews(getDb(context));return json({feedback,total:feedback.length,averageRating:feedback.length?feedback.reduce((s,r)=>s+r.rating,0)/feedback.length:0});}
   if(request.method!=='POST')return json({message:'Metodă nepermisă.'},405);
   sameOrigin(request);

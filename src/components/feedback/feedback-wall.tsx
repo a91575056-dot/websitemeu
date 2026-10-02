@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { Loader2, MessageSquarePlus, RefreshCw, Star } from "lucide-react";
+import { Loader2, RefreshCw, Star } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 
@@ -104,10 +103,7 @@ export function FeedbackWall() {
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row">
-        <Link href="/feedback" className="button-primary justify-center">
-          <MessageSquarePlus className="size-4" />
-          Leave feedback
-        </Link>
+
         <button
           type="button"
           onClick={loadFeedback}
