@@ -3,13 +3,29 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { submitLead, saveLead, readLeads } from '../netlify/functions/lib/leads-core.mjs';
 import { createLeadsHandler } from '../netlify/functions/leads.mjs';
-import { recordEvent, analyticsReport } from '../netlify/functions/lib/analytics-core.mjs';
+import { recordEvent, analyticsReport, visitorLocation } from '../netlify/functions/lib/analytics-core.mjs';
 import { createHandler } from '../netlify/functions/admin.mjs';
 import { passwordHash } from '../netlify/functions/lib/admin-core.mjs';
 class DB {entries=new Map();counter=0;async get(k){return structuredClone(this.entries.get(k)?.data||null);}async getWithMetadata(k){return structuredClone(this.entries.get(k)||null);}async setJSON(k,data,o={}){const p=this.entries.get(k);if(o.onlyIfNew&&p||o.onlyIfMatch&&o.onlyIfMatch!==p?.etag)return {modified:false};this.entries.set(k,{data:structuredClone(data),etag:String(++this.counter)});return {modified:true};}async list({prefix='' }={}){return {blobs:[...this.entries.keys()].filter(k=>k.startsWith(prefix)).map(key=>({key}))};}async delete(k){this.entries.delete(k);}}
 process.env.ADMIN_USERNAME='unit';process.env.ADMIN_PASSWORD_HASH=passwordHash('unit-test-password');
 const req=(action,body,headers={})=>new Request('https://example.test/api/admin?action='+action,{method:body?'POST':'GET',headers:{Origin:'https://example.test','Content-Type':'application/json',...headers},body:body?JSON.stringify(body):undefined});
 const lead=()=>({id:randomUUID(),name:'Test Client',email:'test@example.invalid',details:'A small website for my business.',consent:true,startedAt:Date.now()-5000});
+test('map coordinates come from trusted context, are rounded, reject missing and invalid values',()=>{
+ const location=visitorLocation({ip:'203.0.113.9',geo:{latitude:'47.0105',longitude:'28.8638',city:'Chișinău'}});
+ assert.equal(location.latitude,47);assert.equal(location.longitude,28.9);
+ for(const latitude of [null,undefined,'',' ',true,91,-91,'invalid',Infinity])assert.equal(visitorLocation({geo:{latitude,longitude:25}}).latitude,null);
+ for(const longitude of [181,-181,NaN,' '])assert.equal(visitorLocation({geo:{latitude:45,longitude}}).longitude,null);
+ assert.equal(visitorLocation({geo:{latitude:0,longitude:0}}).latitude,0);
+});
+test('map report preserves old traffic and does not accept client-supplied coordinates',async()=>{
+ const db=new DB(),request=req('analytics',{}, {'User-Agent':'Mozilla'});
+ const body={path:'/',event:'pageview',id:randomUUID(),latitude:1,longitude:2};
+ await recordEvent(db,body,request,{ip:'203.0.113.7',geo:{latitude:47.01,longitude:28.86,city:'Chișinău'}});
+ await recordEvent(db,{...body,id:randomUUID()},request,{ip:'203.0.113.8'});
+ const report=await analyticsReport(db,7);assert.ok(report.mapInstalledAt);
+ const located=report.connections.find(x=>x.ip==='203.0.113.7'),missing=report.connections.find(x=>x.ip==='203.0.113.8');
+ assert.equal(located.latitude,47);assert.equal(located.longitude,28.9);assert.equal(missing.latitude,null);assert.equal(missing.longitude,null);assert.equal(report.pageviews,2);
+});
 test('lead validation, origin, public privacy, persistent rate limit and idempotency',async()=>{
  const db=new DB(),h=createLeadsHandler(()=>db),body=lead();
  assert.equal((await h(req('leads'))).status,405);

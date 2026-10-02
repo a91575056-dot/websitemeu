@@ -9,3 +9,9 @@ Formularul de ofertă salvează numele, emailul, telefonul opțional, afacerea, 
 Store-ul production este `dionis-leads-v1`; preview-urile au store separat pe deploy. Cererile sunt private, cu status, notițe, asociere la un client existent, căutare, filtre, export al listei filtrate și ștergere. Modificările necesită sesiune admin, CSRF și revizie curentă. Nu modificăm workspace-ul existent, contul admin sau configurarea PayPal.
 
 Testele `tests/dashboard-leads.test.mjs` verifică validarea, izolarea accesului, CSRF, rate limit, idempotency, conflicte, ștergere, campanii și comparații. Testele de browser trebuie să utilizeze date fictive și să curețe numai cererile create de test. Nu inițiați plăți reale.
+
+## Harta IP-urilor
+
+Harta privată utilizează exclusiv latitudinea și longitudinea din contextul geo Netlify, rotunjite la 0,1°. Nu colectează GPS și nu pretinde precizie de adresă sau locuință. Vizitele vechi fără coordonate nu sunt poziționate artificial. Adresele cu aceleași coordonate sunt grupate; selecția afișează IP-urile, vizualizările, clicurile și ultima accesare. Căutare, zoom și selecție accesibilă din tastatură. Datele coordonatelor au aceeași retenție de 90 zile ca statisticile și sunt expuse numai în raportul admin autentificat.
+
+Fundalul local `public/admin-world.svg` este derivat din Natural Earth 1:110m land, domeniu public: https://github.com/nvkelso/natural-earth-vector/blob/master/geojson/ne_110m_land.geojson . Harta nu folosește servicii externe de tiles/geocodare și nu transmite IP-urile acestora.
