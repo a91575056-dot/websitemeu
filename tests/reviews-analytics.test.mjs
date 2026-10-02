@@ -1,0 +1,53 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
+import { listReviews, saveReview } from '../netlify/functions/lib/reviews-core.mjs';
+import { recordEvent, analyticsReport, cleanupAnalytics } from '../netlify/functions/lib/analytics-core.mjs';
+import { createFeedbackHandler } from '../netlify/functions/feedback.mjs';
+import { createAnalyticsHandler } from '../netlify/functions/analytics.mjs';
+import { createHandler } from '../netlify/functions/admin.mjs';
+import { passwordHash } from '../netlify/functions/lib/admin-core.mjs';
+class DB {entries=new Map();counter=0;async get(k){return structuredClone(this.entries.get(k)?.data||null);}async getWithMetadata(k){return structuredClone(this.entries.get(k)||null);}async setJSON(k,data,o={}){const previous=this.entries.get(k);if(o.onlyIfNew&&previous||o.onlyIfMatch&&o.onlyIfMatch!==previous?.etag)return {modified:false};this.entries.set(k,{data:structuredClone(data),etag:String(++this.counter)});return {modified:true};}async list({prefix='' }={}){return {blobs:[...this.entries.keys()].filter(k=>k.startsWith(prefix)).map(key=>({key}))};}async delete(k){this.entries.delete(k);}}
+process.env.ADMIN_USERNAME='dionis';process.env.ADMIN_PASSWORD_HASH=passwordHash('test-only-439219!');
+const request=(path,body,headers={})=>new Request('https://example.test'+path,{method:body?'POST':'GET',headers:body?{'Content-Type':'application/json',Origin:'https://example.test',...headers}:headers,body:body?JSON.stringify(body):undefined});
+const body=()=>({name:'Client test',project:'Website',message:'Comunicare și design foarte bune.',rating:4,clientWebsite:'https://example.com',approvedForPublic:true,startedAt:Date.now()-5000,website:''});
+test('preserves legacy records; imports homepage once; pending never leaks; approval, hide, reject, edit, stale ETag, deletion survive reload',async()=>{
+ const db=new DB();await db.setJSON('entries/old.json',{id:'old',name:'Old',message:'Old review content',rating:5,createdAt:'2025-01-01'});
+ const handler=createFeedbackHandler(()=>db);let r=await handler(request('/api/feedback',body()),{ip:'1.2.3.4'});assert.equal(r.status,200);
+ let all=await listReviews(db,true);assert.equal(all.length,6);assert.equal(all.find(x=>x.id==='old').status,'pending');assert.equal((await listReviews(db)).length,4);
+ const item=all.find(x=>x.source==='client-form');const record={...item,clientWebsite:item.website,status:'approved',published:true};await saveReview(db,{key:item.key,etag:item.etag,record},'dionis');assert.equal((await listReviews(db)).length,5);
+ await assert.rejects(()=>saveReview(db,{key:item.key,etag:item.etag,record},'dionis'),e=>e.status===409);
+ let latest=(await listReviews(db,true)).find(x=>x.id===item.id);await saveReview(db,{key:latest.key,etag:latest.etag,record:{...record,message:'Edited review content.',published:false}},'dionis');assert.equal((await listReviews(db)).length,4);
+ latest=(await listReviews(db,true)).find(x=>x.id===item.id);await assert.rejects(()=>saveReview(db,{key:latest.key,etag:latest.etag,record:{...record,status:'rejected'}},'dionis'));
+ await saveReview(db,{key:latest.key,etag:latest.etag,record:{...record,status:'rejected',published:false}},'dionis');assert.equal((await listReviews(db,true)).find(x=>x.id===item.id).status,'rejected');
+ const seed=(await listReviews(db,true)).find(x=>x.source==='existing-homepage');await saveReview(db,{key:seed.key,etag:seed.etag,remove:true},'dionis');await db.delete('migration/static-v1');assert.equal((await listReviews(db,true)).some(x=>x.id===seed.id),false);assert.ok(await db.get('entries/old.json'));
+});
+test('submission enforces consent, length, rating, protocol, origin, honeypot, timing and persistent limits',async()=>{
+ const db=new DB(),h=createFeedbackHandler(()=>db);
+ for(const change of [{approvedForPublic:false},{rating:6},{message:'short'},{name:'x'},{clientWebsite:'javascript:alert(1)'},{message:'x'.repeat(901)},{startedAt:Date.now()}])assert.equal((await h(request('/api/feedback',{...body(),...change}),{ip:'same'})).status,400);
+ assert.equal((await h(request('/api/feedback',body(),{Origin:'https://evil.test'}))).status,403);
+ assert.equal((await h(request('/api/feedback',{...body(),website:'spam'}))).status,200);assert.equal((await db.list({prefix:'entries/'})).blobs.length,0);
+ for(let i=0;i<5;i++)assert.equal((await h(request('/api/feedback',body()),{ip:'same'})).status,200);
+ assert.equal((await createFeedbackHandler(()=>db)(request('/api/feedback',body()),{ip:'same'})).status,429);
+});
+test('private reviews and analytics require admin role and mutation CSRF',async()=>{
+ const db=new DB(),reviews=new DB(),stats=new DB(),h=createHandler(()=>db,()=>reviews,()=>stats);
+ for(const action of ['reviews','analytics'])assert.equal((await h(request('/api/admin?action='+action))).status,401);
+ assert.equal((await h(request('/api/admin?action=review-save',{key:'entries/test.json'}))).status,401);
+ const login=await h(request('/api/admin?action=login',{username:'dionis',password:'test-only-439219!'}),{ip:'test'});const s=await login.json();const auth={cookie:login.headers.get('set-cookie').split(';')[0],'X-CSRF-Token':s.csrf};
+ assert.equal((await h(request('/api/admin?action=reviews',undefined,auth))).status,200);
+ assert.equal((await h(request('/api/admin?action=analytics&days=30',undefined,auth))).status,200);
+ assert.equal((await h(request('/api/admin?action=review-save',{key:'entries/test.json'},{cookie:auth.cookie}))).status,403);
+});
+test('analytics aggregates real events, daily uniques, no raw private fields, deduplication, concurrent CAS and retention',async()=>{
+ const db=new DB();const req=request('/api/analytics',{}, {'User-Agent':'Mozilla Mobile'});const b={path:'/',event:'pageview',id:randomUUID(),referrer:'https://google.com/search?q=private'};
+ await recordEvent(db,b,req,{ip:'1.2.3.4'});await recordEvent(db,b,req,{ip:'1.2.3.4'});
+ await Promise.all(Array.from({length:5},()=>recordEvent(db,{...b,id:randomUUID()},req,{ip:'1.2.3.4'})));
+ await recordEvent(db,{...b,event:'checkout_start',id:randomUUID()},req,{ip:'1.2.3.4'});
+ const report=await analyticsReport(db,7);assert.equal(report.pageviews,6);assert.equal(report.dailyUniqueSum,1);assert.equal(report.events.checkout_start,1);assert.equal(report.sources.Google,6);assert.equal(report.devices.Mobil,6);
+ assert.doesNotMatch(JSON.stringify(report),/visitors|1\.2\.3\.4|Mozilla|private/);assert.doesNotMatch(JSON.stringify([...db.entries.values()]),/1\.2\.3\.4|Mozilla|private/);
+ await recordEvent(db,{...b,id:randomUUID()},request('/api/analytics',{}, {'User-Agent':'Googlebot'}),{ip:'other'});assert.equal((await analyticsReport(db,7)).pageviews,6);
+ const h=createAnalyticsHandler(()=>db);assert.equal((await h(request('/api/analytics'))).status,405);assert.equal((await h(request('/api/analytics',b,{Origin:'https://evil.test'}))).status,403);
+ await db.setJSON('days/2020-01-01/0.json',{});await cleanupAnalytics(db);assert.equal(await db.get('days/2020-01-01/0.json'),null);
+ await assert.rejects(()=>analyticsReport(db,100));
+});

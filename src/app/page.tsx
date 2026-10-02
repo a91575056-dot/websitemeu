@@ -1,3 +1,4 @@
+import { HomepageReviews } from "@/components/feedback/homepage-reviews";
 import Link from "next/link";
 import Image from "next/image";
 import type { LucideIcon } from "lucide-react";
@@ -22,7 +23,6 @@ import {
   ShieldCheck,
   Smartphone,
   Sparkles,
-  Star,
 } from "lucide-react";
 
 import { PayPalCheckout } from "@/components/paypal-checkout";
@@ -45,7 +45,6 @@ import {
   reasons,
   services,
   siteConfig,
-  testimonials,
   trustPoints,
   type IconKey,
 } from "@/data/site";
@@ -643,29 +642,7 @@ export default function Home() {
               />
             </SectionReveal>
 
-            <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-              {testimonials.map((testimonial, index) => (
-                <SectionReveal key={testimonial.author} delay={index * 0.04}>
-                  <article className="panel h-full p-7">
-                    <div className="flex gap-1 text-amber-500">
-                      {Array.from({ length: 5 }).map((_, starIndex) => (
-                        <Star key={starIndex} className="size-4 fill-current" />
-                      ))}
-                    </div>
-                    <p className="mt-5 text-base leading-8 text-slate-700">
-                      “{testimonial.quote}”
-                    </p>
-                    <div className="mt-6 pt-2">
-                      <p className="font-display text-lg font-semibold text-slate-950">
-                        {testimonial.author}
-                      </p>
-                      <p className="text-sm text-slate-500">{testimonial.role}</p>
-                      <time dateTime={testimonial.date} className="mt-2 block text-xs font-medium tracking-[0.16em] text-slate-400 uppercase">{testimonial.dateLabel}</time>
-                    </div>
-                  </article>
-                </SectionReveal>
-              ))}
-            </div>
+            <HomepageReviews />
           </div>
         </section>
 

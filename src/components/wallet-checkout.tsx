@@ -9,6 +9,7 @@ type Props = { clientId: string; environment: "live" | "sandbox"; currency: stri
 type WalletStatus = { available: boolean; applePayEligible: boolean; googlePayEligible: boolean; appleDomainVerified: boolean };
 
 async function api(action: string, body: OrderInput | { orderId: string }) {
+ if(action === "create-order") window.dispatchEvent(new Event("dionis-checkout-start"));
  const response = await fetch(`/api/paypal/${action}`, {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
  const data = await response.json();
  if (!response.ok || (action === "capture-order" && !data.ok)) throw new Error(data.message || "Payment could not be completed.");

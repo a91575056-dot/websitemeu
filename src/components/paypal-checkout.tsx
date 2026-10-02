@@ -314,6 +314,7 @@ export function PayPalCheckout() {
           message: "Creating your secure PayPal checkout...",
         });
 
+        window.dispatchEvent(new Event("dionis-checkout-start"));
         const response = await fetch("/api/paypal/create-order", {
           method: "POST",
           headers: { "Content-Type": "application/json" },

@@ -13,12 +13,13 @@ type SubmitState =
 const initialState: SubmitState = { status: "idle", message: "" };
 
 export function FeedbackForm() {
+  const [startedAt] = useState(() => Date.now());
   const [name, setName] = useState("");
   const [project, setProject] = useState("");
   const [clientWebsite, setClientWebsite] = useState("");
   const [message, setMessage] = useState("");
   const [rating, setRating] = useState(5);
-  const [approvedForPublic, setApprovedForPublic] = useState(true);
+  const [approvedForPublic, setApprovedForPublic] = useState(false);
   const [website, setWebsite] = useState("");
   const [submitState, setSubmitState] = useState<SubmitState>(initialState);
 
@@ -36,6 +37,7 @@ export function FeedbackForm() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          startedAt,
           name,
           project,
           clientWebsite,
@@ -57,11 +59,11 @@ export function FeedbackForm() {
       setClientWebsite("");
       setMessage("");
       setRating(5);
-      setApprovedForPublic(true);
+      setApprovedForPublic(false);
       setWebsite("");
       setSubmitState({
         status: "success",
-        message: "Thank you! Your feedback is now public.",
+        message: "Thank you! Your feedback has been received and will appear only after approval.",
       });
     } catch (error) {
       setSubmitState({
@@ -146,6 +148,7 @@ export function FeedbackForm() {
       <label className="space-y-2 text-sm font-semibold text-slate-700">
         Feedback
         <textarea
+          aria-label="Feedback"
           value={message}
           onChange={(event) => setMessage(event.target.value.slice(0, 900))}
           rows={7}
@@ -178,7 +181,7 @@ export function FeedbackForm() {
           required
           className="mt-1 size-4 accent-teal-700"
         />
-        I agree that this feedback can be displayed publicly on dionisweb.com.
+        I agree that my name, project, website and feedback can be displayed publicly on dionisweb.com after approval. Do not include private information.
       </label>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">

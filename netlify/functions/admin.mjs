@@ -1,8 +1,10 @@
+import { reviewStore, listReviews, saveReview } from './lib/reviews-core.mjs';
+import { analyticsStore, analyticsReport } from './lib/analytics-core.mjs';
 import { store, hash, fail, verifyPassword, token, cookie, sessionToken, sameOrigin, authenticate, authorizeMutation, readWorkspace, writeWorkspace, mutate, dashboard } from './lib/admin-core.mjs';
 import { checkSite } from './lib/admin-monitor-core.mjs';
 
 const respond=(body,status=200,headers={})=>new Response(JSON.stringify(body),{status,headers:{'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff',...headers}});
-export function createHandler(getDb=store) {
+export function createHandler(getDb=store, getReviews=reviewStore, getAnalytics=analyticsStore) {
  return async (request, context) => {
   try {
     const url=new URL(request.url);
@@ -41,6 +43,9 @@ export function createHandler(getDb=store) {
     if(action==='session' && request.method==='GET') return respond({username:session.username,csrf:session.csrf});
     if(request.method==='POST') authorizeMutation(request,session);
     if(action==='logout' && request.method==='POST') { await db.delete(`sessions/${hash(sessionToken(request))}`); return respond({ok:true},200,{'Set-Cookie':cookie(request,'',0)}); }
+    if(action==='reviews' && request.method==='GET') return respond({reviews:await listReviews(getReviews(context),true)});
+    if(action==='review-save' && request.method==='POST') return respond(await saveReview(getReviews(context),body,session.username));
+    if(action==='analytics' && request.method==='GET') return respond(await analyticsReport(getAnalytics(context),url.searchParams.get('days')));
     if(action==='data' && request.method==='GET') { const {data}=await readWorkspace(db); return respond({...data,dashboard:dashboard(data)}); }
     if(action==='save' && request.method==='POST') {
       const {data,etag}=await readWorkspace(db);

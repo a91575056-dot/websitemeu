@@ -3,6 +3,8 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import './admin.css';
 import Link from 'next/link';
+import { ReviewsPanel } from './reviews-panel';
+import { AnalyticsPanel } from './analytics-panel';
 
 type Collection = 'clients' | 'projects' | 'payments' | 'sites' | 'maintenance';
 type Check = { at: string; ok: boolean; status: number; latencyMs: number; message: string };
@@ -27,7 +29,7 @@ const statusLabel = (status?: string) => [...projectStatuses,['activ','Activ'],[
 export default function AdminPanel() {
  const [session,setSession]=useState<{username:string;csrf:string}|null>(null);
  const [data,setData]=useState<Data|null>(null);
- const [tab,setTab]=useState<Collection|'dashboard'>('dashboard');
+ const [tab,setTab]=useState<Collection|'dashboard'|'reviews'>('dashboard');
  const [editing,setEditing]=useState<{collection:Collection;item:Item|null}|null>(null);
  const [draft,setDraft]=useState<Record<string,string>>({});
  const [busy,setBusy]=useState(false);
@@ -105,11 +107,12 @@ export default function AdminPanel() {
  if(!session) return <main className="admin-shell admin-login" lang="ro"><Link href="/">← Site public</Link><section className="admin-card"><span className="admin-eyebrow">DIONIS WEB</span><h1>Administrare</h1><p>Acces securizat pentru gestionarea activității.</p>{(error||loginRequired)&&<p className="admin-error" role="alert">{error||'Sesiunea a expirat. Autentifică-te din nou.'}</p>}<form onSubmit={login}><label>Utilizator<input autoComplete="username" required value={username} onChange={e=>setUsername(e.target.value)} /></label><label>Parolă<input type="password" autoComplete="current-password" required maxLength={256} value={password} onChange={e=>setPassword(e.target.value)} /></label><button disabled={busy}>{busy?'Se autentifică…':'Autentificare'}</button></form></section></main>;
  return <main className="admin-shell" lang="ro">
   <header className="admin-header"><div><span className="admin-eyebrow">DIONIS WEB · ADMIN</span><h1>Panou de administrare</h1><p>Clienți, proiecte și încasări într-un singur loc.</p></div><div className="admin-actions"><Link href="/">Site public</Link><span>{session.username}</span><button className="secondary" disabled={busy} onClick={()=>run(async()=>{await api('logout',{});setSession(null);setData(null);setEditing(null);})}>Deconectare</button></div></header>
-  <nav className="admin-tabs" aria-label="Secțiuni admin">{(['dashboard',...Object.keys(labels)] as (Collection|'dashboard')[]).map(key=><button className={tab===key?'selected':'secondary'} key={key} onClick={()=>{setTab(key);setSearch('');setEditing(null);}}>{key==='dashboard'?'Dashboard':labels[key]}</button>)}</nav>
+  <nav className="admin-tabs" aria-label="Secțiuni admin">{(['dashboard','reviews',...Object.keys(labels)] as (Collection|'dashboard'|'reviews')[]).map(key=><button className={tab===key?'selected':'secondary'} key={key} onClick={()=>{setTab(key);setSearch('');setEditing(null);}}>{key==='dashboard'?'Dashboard':key==='reviews'?'Review-uri':labels[key]}</button>)}</nav>
   {error&&<p className="admin-error" role="alert">{error}</p>}{notice&&<p className="admin-notice" role="status">{notice}</p>}
   <div className="admin-toolbar"><span>Reîncarcă datele pentru a vedea ultimele modificări.</span><button className="secondary" disabled={busy} onClick={()=>run(async()=>{setData(await api('data'));setNotice('Date actualizate.');})}>Actualizează</button><button className="secondary" disabled={!data||busy} onClick={()=>{if(!data)return;const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=`dionis-admin-${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(url);}}>Export date</button></div>
-  {!data?<p>Datele nu sunt încă disponibile. Folosește „Actualizează”.</p>:tab==='dashboard'?<>
+  {!data?<p>Datele nu sunt încă disponibile. Folosește „Actualizează”.</p>:tab==='reviews'?<ReviewsPanel csrf={session.csrf}/>:tab==='dashboard'?<>
    <section className="admin-summary"><article className="admin-card"><span>Proiecte active</span><strong>{data.dashboard.activeProjects}</strong></article><article className="admin-card"><span>Clienți</span><strong>{data.dashboard.clients}</strong></article><article className="admin-card"><span>Site-uri cu ultima verificare eșuată</span><strong>{data.sites.filter(x=>x.active&&x.checks?.[0]?.ok===false).length}</strong></article><article className="admin-card"><span>Lucrări de mentenanță deschise</span><strong>{data.maintenance.filter(x=>x.status!=='finalizata').length}</strong></article></section>
+   <AnalyticsPanel />
    <h2>Situația financiară</h2><p>Veniturile reprezintă plățile marcate manual ca încasate. Monedele sunt calculate separat, fără conversie.</p>
    {Object.entries(data.dashboard.currencies).length===0?<section className="admin-card">Adaugă un client și un proiect pentru a începe.</section>:Object.entries(data.dashboard.currencies).map(([currency,t])=><section key={currency} className="admin-card admin-finance"><h3>{currency}</h3><div><span>Valoare contractată</span><strong>{money(t.contracted,currency)}</strong></div><div><span>Venituri încasate</span><strong>{money(t.received,currency)}</strong></div><div><span>Rest de încasat</span><strong>{money(t.outstanding,currency)}</strong></div><div><span>Tranșe restante</span><strong>{money(t.overdue,currency)}</strong></div></section>)}
    <section className="admin-card"><h2>Scadențe și termene</h2>{[...data.payments.filter(x=>x.status!=='incasata'&&x.dueDate).map(x=>({id:x.id,date:x.dueDate!,title:`Plată · ${name('projects',x.projectId)}`,tab:'payments' as const})),...data.projects.filter(x=>!['finalizat','anulat'].includes(x.status||'')&&x.deadline).map(x=>({id:x.id,date:x.deadline!,title:`Proiect · ${x.name}`,tab:'projects' as const})),...data.maintenance.filter(x=>x.status!=='finalizata'&&x.dueDate).map(x=>({id:x.id,date:x.dueDate!,title:`Mentenanță · ${x.title}`,tab:'maintenance' as const}))].sort((a,b)=>a.date.localeCompare(b.date)).slice(0,12).map(x=><div className="admin-deadline" key={x.id}><button className="text-button" onClick={()=>setTab(x.tab)}>{x.title}</button><span className={x.date<new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Chisinau'}).format(new Date())?'overdue':''}>{dateLabel(x.date)}</span></div>)}{!data.projects.length&&!data.payments.length&&!data.maintenance.length&&<p>Nu există termene înregistrate.</p>}</section>

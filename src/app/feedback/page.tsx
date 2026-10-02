@@ -32,7 +32,7 @@ export default function FeedbackPage() {
               Leave feedback about our collaboration.
             </h1>
             <p className="max-w-xl text-base leading-8 text-slate-600 sm:text-lg">
-              Your feedback will appear publicly on the Dionis Web review page
+              After approval, your feedback may appear publicly on the Dionis Web review page
               and helps future clients understand what the process feels like.
             </p>
           </div>
