@@ -38,5 +38,6 @@ test('previous-period arithmetic, incomplete baseline, bounded campaigns and pag
  let r=await analyticsReport(db,7);assert.equal(r.campaigns['facebook / social / autumn'],1);assert.equal(r.pageEvents['/'].quote_start,1);assert.equal(r.previous.complete,false);
  const oldDay=new Date(Date.now()-8*86400000).toISOString().slice(0,10);await db.setJSON(`days/${oldDay}/0.json`,{day:oldDay,pageviews:4,visitors:{},events:{contact_click:2}});await db.setJSON('installed',{at:new Date(Date.now()-30*86400000).toISOString()});
  r=await analyticsReport(db,7);assert.equal(r.previous.pageviews,4);assert.equal(r.previous.events.contact_click,2);assert.equal(r.previous.complete,true);assert.equal((await analyticsReport(db,90)).previous.complete,false);
+ await recordEvent(db,{...body,id:randomUUID(),utmSource:'constructor',utmMedium:'',utmCampaign:''},request,{ip:'203.0.113.2'});assert.equal(Object.hasOwn((await analyticsReport(db,7)).campaigns,'constructor'),false);
  await recordEvent(db,{...body,id:randomUUID(),utmCampaign:'private@example.com'},request,{ip:'203.0.113.2'});assert.doesNotMatch(JSON.stringify((await analyticsReport(db,7)).campaigns),/@example/);
 });

@@ -22,7 +22,8 @@ export async function recordEvent(db,body,request,context) {
  const day=new Date().toISOString().slice(0,10),identity=digest(`${day}|${context?.ip||'unknown'}|${ua}`),shard=parseInt(identity.slice(0,2),16)%16;
  const key=`days/${day}/${shard}.json`,now=Date.now(),minute=Math.floor(now/60000);
  const device=/ipad|tablet/i.test(ua)?'Tabletă':/mobile|android|iphone/i.test(ua)?'Mobil':'Desktop / altul';
- const campaign=[body.utmSource,body.utmMedium,body.utmCampaign].map(v=>typeof v==='string'&&/^[a-zA-Z0-9_. -]{1,64}$/.test(v)?v:'').join(' / ').replace(/^[ /]+|[ /]+$/g,'');
+ let campaign=[body.utmSource,body.utmMedium,body.utmCampaign].map(v=>typeof v==='string'&&/^[a-zA-Z0-9_. -]{1,64}$/.test(v)?v:'').join(' / ').replace(/^[ /]+|[ /]+$/g,'');
+ if(['__proto__','constructor','prototype'].includes(campaign))campaign='';
  const source=classifySource(body.referrer,new URL(request.url).origin);
  for(let attempt=0;attempt<8;attempt++){
   const item=await db.getWithMetadata(key,{type:'json'});
